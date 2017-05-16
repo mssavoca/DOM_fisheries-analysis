@@ -13,7 +13,7 @@ clean_csv=function(x){
 
 #orig_csv_NEfish2010 = read.csv("Original CSVs/NE region/NE_FirstEditionUpdate1-2010Data_Fish_By_Fishery_15-MAY-2017.csv", header = FALSE)
 
-#names(orig_csv_NEfish2010) = unlist(orig_csv_NEfish2010[3, ]) # makes the third row the header 
+#names(orig_csv_NEfish2010) = unlist(orig_csv_NEfish2010[3, ]) # makes the third row the header
 #orig_csv_NEfish2010 = orig_csv_NEfish2010[-(1:3),] # deletes first three rows of data frame
 
 #View(orig_csv_NEfish2010)
