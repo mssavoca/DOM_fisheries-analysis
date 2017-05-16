@@ -47,6 +47,7 @@ clean_MM_SB_ST_csv=function(x){
 for(csv in csvlist){
   a=clean_MM_SB_ST_csv(csv)
   assign(csv,a)
+  write.csv(a,paste0(folder,"/",csv,".csv") #### change folder
 }
 
 ################################################
@@ -63,6 +64,7 @@ for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
 }
 rm(path,r,name,csv)
 csvlist=ls() #empty
+ csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list
 
 #setwd("") do this through Files --> settings wheel --> Set as Working Directory
 clean_fish_csv=function(x){
