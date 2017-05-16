@@ -7,3 +7,9 @@ for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
   assign(name,r)
   print(csv)
 }
+rm(path,r,name,csv)
+csvlist=ls() #empty
+
+lapply(csvlist,FUN=)
+
+lapply(write.csv)
