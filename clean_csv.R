@@ -1,4 +1,4 @@
-## File for cleaning NMFS Bycatch data for DOM fishery analysis
+## File for cleaning NMFS Bycatch data for DOM fishery analysis 2.0
 ## step 1: download files
 ## step 2: save as csvs
 ## step 3: run this code for all files to clean
