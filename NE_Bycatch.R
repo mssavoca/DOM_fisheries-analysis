@@ -9,16 +9,19 @@ library(ggplot2)
 # Set working directory and read in data
 setwd("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/")
 
-orig_csv_NEfish2010 = read.csv("Original CSVs/NE region/NE_FirstEditionUpdate1-2010Data_Fish_By_Fishery_15-MAY-2017.csv", header = FALSE)
+clean_csv=function(x){
 
-names(orig_csv_NEfish2010) = unlist(orig_csv_NEfish2010[3, ]) # makes the third row the header 
-orig_csv_NEfish2010 = orig_csv_NEfish2010[-(1:3),] # deletes first three rows of data frame
+#orig_csv_NEfish2010 = read.csv("Original CSVs/NE region/NE_FirstEditionUpdate1-2010Data_Fish_By_Fishery_15-MAY-2017.csv", header = FALSE)
 
-View(orig_csv_NEfish2010)
+#names(orig_csv_NEfish2010) = unlist(orig_csv_NEfish2010[3, ]) # makes the third row the header 
+#orig_csv_NEfish2010 = orig_csv_NEfish2010[-(1:3),] # deletes first three rows of data frame
+
+#View(orig_csv_NEfish2010)
 
 
-a=read.csv("Original CSVs/NE region/NE_FirstEditionUpdate1-2010Data_Fish_By_Fishery_15-MAY-2017.csv",header=FALSE)
-a=a[c(3:nrow(a)),] ##get rid of first two rows
+#a=read.csv(x,header=FALSE)
+a=get(x)
+a=a[c(2:nrow(a)),] ##get rid of first two rows
 rownames(a)=1:nrow(a)
 colnames(a)=as.character(unlist(a[1,])) # makes first row the header
 a=a[-1,] #removes the first row
@@ -73,3 +76,6 @@ e$FISHERY.BYCATCH.RATIO=ifelse(e$YEAR=="" & e$`COMMON NAME`=="FISHERY BYCATCH RA
 f=fill(e,FISHERY.BYCATCH.RATIO,.direction = "up") #fill that value up in the dataframe
 
 f=f[-which(f$`COMMON NAME`=="FISHERY BYCATCH RATIO (Bycatch/Total Catch)"),] #removes the "FISHERY.BYCATCH.RATIO" summary row
+
+return(f)
+}
