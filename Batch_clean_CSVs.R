@@ -45,9 +45,12 @@ clean_MM_SB_ST_csv=function(x){
 
 
 for(csv in csvlist){
+  if(!grepl("Fish_",csv)){  ## run for all csvs that are not fish
+    print(csv)
   a=clean_MM_SB_ST_csv(csv)
   assign(csv,a)
-  write.csv(a,paste0(folder,"/",csv,".csv") #### change folder
+  write.csv(a,paste0("/Volumes/SeaGate/Matt_Savoca_DOM_fisheries/DOM_fisheries-analysis/junk/",csv)) #### change folder
+  }
 }
 
 ################################################
