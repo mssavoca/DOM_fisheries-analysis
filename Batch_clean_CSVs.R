@@ -1,3 +1,10 @@
+##########
+# Batch cleaning for  CSVs downloaded from the National Oberserver Program's Bycatch Report
+##########
+library(data.table)
+library(dplyr)
+
+
 #first read in all CSVs and put them in an R list object
 for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
   path=paste(getwd(),"/",csv,sep="")
@@ -7,8 +14,10 @@ for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
   print(csv)
 }
 rm(path,r,name,csv)
-csvlist=ls() #empty
+#csvlist=ls() #empty
+csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list
 
+x = "PI_FirstEditionUpdate1-2010Data_MarineMammal_By_Fishery_23-MAY-2017.csv"
 
 #setwd("") do this through Files --> settings wheel --> Set as Working Directory
 clean_MM_SB_ST_csv=function(x){
@@ -20,9 +29,11 @@ clean_MM_SB_ST_csv=function(x){
   colnames(a)=as.character(unlist(a[1,])) # makes first row the header
   a=a[-1,] #removes the first row
   
+  a$REGION = substr(x, start = 1, stop = 2) # creates a new column REGION and populates it with the first two characters of the filename
+  
   a$FISHERY=NA
   a$`COMMON NAME`=as.character(a$`COMMON NAME`)
-  a$FISHERY=ifelse(a$`BYCATCH`==""& a$YEAR=="",a$`COMMON NAME`,a$FISHERY)
+  a$FISHERY=ifelse(a$`BYCATCH`==""& a$YEAR=="",a$`COMMON NAME`,a$FISHERY) # if BYCATCH & YEAR are blank, the 
   
   b=fill(a,FISHERY,.direction = "down") #fill in the fishery name; somehow knows to stop and restart with each new fishery
   
@@ -33,7 +44,7 @@ clean_MM_SB_ST_csv=function(x){
   b=b[-which(b$`YEAR`=="" & b$`BYCATCH`==''),] #remove rows where year and bycatch are blank
   
   b$BYCATCH = as.numeric(gsub(",", "", b$BYCATCH)) #removes commas from the values in the bycatch column
-  
+
   b$TOTAL.FISHERY.BYCATCH=ifelse(b$YEAR=="" & b$`COMMON NAME`=="Fishery Total",b$`BYCATCH`,b$TOTAL.FISHERY.BYCATCH) # if year is blank and common name is "Fishery Total", then fill in value of bycatch in "TOTAL FISHERY BYCATCH" column
   
   c=fill(b,TOTAL.FISHERY.BYCATCH,.direction = "up") #fill that value up in the dataframe
@@ -44,19 +55,42 @@ clean_MM_SB_ST_csv=function(x){
 }
 
 
+# for(csv in csvlist){
+#   a=clean_MM_SB_ST_csv(csv)
+#   assign(csv,a)
+#   #write.csv(a,paste0(folder,"/",csv,".csv")) #### change folder
+# }
+
 for(csv in csvlist){
-  if(!grepl("Fish_",csv)){  ## run for all csvs that are not fish
+  if(!grepl(pattern = "PI_",csv)){  ## run for all csvs that are not fish
     print(csv)
-  a=clean_MM_SB_ST_csv(csv)
-  assign(csv,a)
-  write.csv(a,paste0("/Volumes/SeaGate/Matt_Savoca_DOM_fisheries/DOM_fisheries-analysis/junk/",csv)) #### change folder
+    a=clean_MM_SB_ST_csv(csv)
+    assign(csv,a)
+    write.csv(a,paste0("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/MM_SB_ST bycatch/",csv)) #### change folder
   }
 }
+
+## Read in and combine CSVs into one large data frame
+load_data <- function(path) { 
+  files <- dir(path = "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/MM_SB_ST bycatch/",
+               pattern = '\\.csv', full.names = TRUE)
+  tables <- lapply(files, read.csv)
+  tables <- lapply(tables, function(df) mutate_at(df, .cols = c("YEAR"), as.factor)) #changes the YEAR column so that it's always a factor; prevents NAs
+  do.call(rbind, tables)
+}
+
+# run the function above, loading in and combining all the cleaned data frames
+MM_SB_ST_master_data_frame <- load_data("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/MM_SB_ST bycatch/")
+
+#output cleaned and combined data frame to csv
+write.csv(MM_SB_ST_master_data_frame, "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Combined CSVs/MM_SB_ST_master_data_frame.csv")
 
 ################################################
 # then clear R environment and run the following for the fish bycatch files
 ################################################
+
 #setwd("") do this through Files --> settings wheel --> Set as Working Directory
+
 #first read in all CSVs and put them in an R list object
 for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
   path=paste(getwd(),"/",csv,sep="")
@@ -66,21 +100,27 @@ for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
   print(csv)
 }
 rm(path,r,name,csv)
-csvlist=ls() #empty
- csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list
+#csvlist=ls() #empty
+csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list where you dont have to remove history 
 
 #setwd("") do this through Files --> settings wheel --> Set as Working Directory
+
+#x="AK_FirstEditionUpdate1-2010Data_Fish_By_Fishery_25-APR-2017.csv"
+
 clean_fish_csv=function(x){
   
-  a=get(x)
-  a=a[c(2:nrow(a)),] ##get rid of first two rows
+  a=read.csv(x,header=FALSE)
+  # a=get(x)
+  a=a[c(3:nrow(a)),] ##get rid of first two rows
   rownames(a)=1:nrow(a)
   colnames(a)=as.character(unlist(a[1,])) # makes first row the header
   a=a[-1,] #removes the first row
   
+  a$REGION = substr(x, start = 1, stop = 2) # creates a new column REGION and populates it with the first two characters of the filename
+  
   a$FISHERY=NA
   a$`COMMON NAME`=as.character(a$`COMMON NAME`)
-  a$FISHERY=ifelse(a$`BYCATCH`==""& a$YEAR=="",a$`COMMON NAME`,a$FISHERY)
+  a$FISHERY=ifelse(a$`BYCATCH`==""& a$YEAR=="",a$`COMMON NAME`,a$FISHERY) ## PI REGION DOES BYCATCH DIFFERENTLY, LIVE + DEAD, MESSES UP THIS CODE, took out the PI code for now 
   
   #a$BYCATCH = as.numeric(gsub(",", "", a$BYCATCH))
   #a$BYCATCH=as.numeric(a$BYCATCH)
@@ -133,6 +173,10 @@ clean_fish_csv=function(x){
 }
 
 for(csv in csvlist){
-  a=clean_fish_csv(csv)
-  assign(csv,a)
+  if(!grepl("PI_",csv)){  ## run for all csvs that are fish
+    print(csv)
+    a=clean_fish_csv(csv)
+    assign(csv,a)
+    write.csv(a,paste0("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch/",csv)) #### change folder
+  }
 }
