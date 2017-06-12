@@ -42,4 +42,18 @@ d3 <- d1 %>%
   arrange(desc(Ave_Bycatch_Ratio))
 View(d3)
 
+#average by year
+d4 <- d1 %>%
+  group_by(YEAR) %>%
+  summarize(Ave_Bycatch_Ratio = mean(Bycatch_Ratio),
+            SE = SE(Bycatch_Ratio)) %>%
+  arrange(desc(Ave_Bycatch_Ratio))
+View(d4)
 
+#average by fishery
+d5 <- d1 %>%
+  group_by(FISHERY) %>%
+  summarize(Ave_Bycatch_Ratio = mean(Bycatch_Ratio),
+            SE = SE(Bycatch_Ratio)) %>%
+  arrange(desc(Ave_Bycatch_Ratio))
+View(d5)
