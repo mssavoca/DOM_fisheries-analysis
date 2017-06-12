@@ -306,7 +306,7 @@ csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list where you 
 
 #setwd("") do this through Files --> settings wheel --> Set as Working Directory
 
-#x = "PI_FirstEditionUpdate2-2013Data_Fish_By_Fishery_23-MAY-2017.csv"
+#x = "PI_FirstEditionUpdate2-2013Data_Fish_By_Fishery_23-MAY-2017.csv" #testing out on one dataframe if loop doesn't work
 
 clean_fish_PI_csv=function(x){
   
