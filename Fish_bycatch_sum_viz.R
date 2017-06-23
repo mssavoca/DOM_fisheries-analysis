@@ -22,8 +22,9 @@ d1 <- fish_invert_master %>%
   group_by(FISHERY, YEAR, FISHERY.TYPE, REGION)%>%
   summarize(Total_Bycatch = mean(TOTAL.FISHERY.BYCATCH),
             Total_Landings = mean(TOTAL.FISHERY.LANDINGS),
+            Total_Catch = mean(TOTAL.CATCH),
             Bycatch_Ratio = mean(FISHERY.BYCATCH.RATIO)) %>%
-  arrange(desc(Bycatch_Ratio, YEAR))
+  arrange(desc(FISHERY))
 View(d1)
 
 #average by fishing type
@@ -57,3 +58,11 @@ d5 <- d1 %>%
             SE = SE(Bycatch_Ratio)) %>%
   arrange(desc(Ave_Bycatch_Ratio))
 View(d5)
+
+#average landings by fishery
+d6 <- d1 %>%
+  group_by(FISHERY) %>%
+  summarize(Ave_Landings = mean(Total_Landings),
+            SE = SE(Total_Landings)) %>%
+  arrange(desc(FISHERY))
+View(d6)
