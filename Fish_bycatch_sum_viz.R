@@ -27,6 +27,29 @@ d1 <- fish_invert_master %>%
   arrange(desc(FISHERY))
 View(d1)
 
+#visualizing data distributions 
+
+#histogram for bycatch ratio by year
+ggplot(data=d1, aes(Bycatch_Ratio)) + 
+  geom_histogram(binwidth = 0.01)+
+  geom_density(col=2) + 
+  facet_wrap(~YEAR) +
+  ggtitle("Histogram for Bycatch Ratio by Year") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x="Bycatch Ratio", y="Count")
+
+
+#histogram for landings by year
+ggplot(data=d1, aes(Total_Landings, y = ..density..)) + 
+  geom_histogram()+
+  geom_density(col=2) + 
+  facet_wrap(~YEAR) +
+  xlim(0,5e+08) +
+  ylim(0,1.5e-08) +
+  ggtitle("Histogram for Landings by Year") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x="Landings", y="Density")
+
 #average by fishing type
 d2 <- d1 %>%
   group_by(FISHERY.TYPE) %>%
