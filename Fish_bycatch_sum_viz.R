@@ -31,7 +31,7 @@ View(d1)
 
 #histogram for bycatch ratio by year
 ggplot(data=d1, aes(Bycatch_Ratio)) + 
-  geom_histogram(binwidth = 0.01)+
+  geom_histogram(binwidth = 0.01) +
   geom_density(col=2) + 
   facet_wrap(~YEAR) +
   ggtitle("Histogram for Bycatch Ratio by Year") +
@@ -40,15 +40,56 @@ ggplot(data=d1, aes(Bycatch_Ratio)) +
 
 
 #histogram for landings by year
-ggplot(data=d1, aes(Total_Landings, y = ..density..)) + 
-  geom_histogram()+
-  geom_density(col=2) + 
+ggplot(data=d1, aes(Total_Landings, ..count..)) + 
+  geom_histogram() +
+  geom_density(aes(y = ..count..), col=2) + 
   facet_wrap(~YEAR) +
   xlim(0,5e+08) +
-  ylim(0,1.5e-08) +
+  #ylim(0,1.5e-08) +
   ggtitle("Histogram for Landings by Year") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(x="Landings", y="Density")
+  labs(x="Landings", y="Count")
+
+#histogram for ESA listed species caught by year
+threat.list = read.csv(file = "Listing_master_data_frame_DOM_analysis.csv")
+ggplot(data=threat.list, aes(ESA.Listed.Sp)) + 
+  geom_histogram()+
+  geom_density(aes(y = ..count..), col=2) + 
+  facet_wrap(~Year) +
+  ggtitle("Histogram for ESA listed species bycaught by Year") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x="ESA listed species bycaught", y="Count")
+
+#histogram for ESA listed lbs fish caught by year
+threat.list = read.csv(file = "Listing_master_data_frame_DOM_analysis.csv")
+ggplot(data=threat.list, aes(ESA.Listed.fish.lbs)) + 
+  geom_histogram()+
+  geom_density(aes(y = ..count..), col=2) + 
+  facet_wrap(~Year) +
+  ggtitle("Histogram for ESA listed fish (lbs.) bycaught by Year") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x="ESA listed fish bycaught (lbs.)", y="Count")
+
+#histogram for IUCN listed species caught by year
+IUCN.threat.list = read.csv(file = "IUCN listing_master_data_frame_DOM_analysis.csv")
+ggplot(data=IUCN.threat.list, aes(IUCN.Listed.Sp)) + 
+  geom_histogram(aes(y = ..count..))+
+  geom_density(aes(y = ..count..), col=2) + 
+  facet_wrap(~Year) +
+  ggtitle("Histogram for IUCN NT and above bycaught by Year") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x="IUCN listed species bycaught", y="Count")
+
+#histogram for IUCN listed fish (lbs.) caught by year
+IUCN.threat.list = read.csv(file = "IUCN listing_master_data_frame_DOM_analysis.csv")
+ggplot(data=IUCN.threat.list, aes(IUCN.Listed.fish.lbs)) + 
+  geom_histogram(aes(y = ..count..))+
+  geom_density(aes(y = ..count..), col=2) + 
+  facet_wrap(~Year) +
+  ggtitle("Histogram for fish IUCN NT and above bycaught (lbs.) by Year") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x="IUCN listed fish bycaught (lbs.)", y="Count")
+
 
 #average by fishing type
 d2 <- d1 %>%
