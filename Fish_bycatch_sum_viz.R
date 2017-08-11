@@ -50,6 +50,16 @@ ggplot(data=d1, aes(Total_Landings, ..count..)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   labs(x="Landings", y="Count")
 
+#histogram for MMPA category rankings by fishery
+d_MMPA <- filter(fish_invert_master, MMPA.Category != "ND")
+ggplot(d_MMPA, aes(MMPA.Category)) +
+  geom_histogram(stat = count) +
+  geom_density(aes(y = ..count..), col=2) + 
+  facet_wrap(~YEAR) +
+  ggtitle("Histogram of MMPA Category ranking") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(x="MMPA Category", y="Count")
+
 #histogram for ESA listed species caught by year
 threat.list = read.csv(file = "Listing_master_data_frame_DOM_analysis.csv")
 ggplot(data=threat.list, aes(ESA.Listed.Sp)) + 
