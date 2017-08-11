@@ -19,7 +19,7 @@ fish_invert_master$TOTAL.FISHERY.LANDINGS = as.numeric(gsub(",", "", fish_invert
 #creating a summary table
 d1 <- fish_invert_master %>%
   filter(UNIT == "POUND") %>% #removes fisheries where the bycatch is by individual
-  group_by(FISHERY, YEAR, FISHERY.TYPE, REGION)%>%
+  group_by(FISHERY, YEAR, FISHERY.TYPE, REGION, MMPA.Category)%>%
   summarize(Total_Bycatch = mean(TOTAL.FISHERY.BYCATCH),
             Total_Landings = mean(TOTAL.FISHERY.LANDINGS),
             Total_Catch = mean(TOTAL.CATCH),
@@ -51,10 +51,9 @@ ggplot(data=d1, aes(Total_Landings, ..count..)) +
   labs(x="Landings", y="Count")
 
 #histogram for MMPA category rankings by fishery
-d_MMPA <- filter(fish_invert_master, MMPA.Category != "ND")
+d_MMPA <- filter(d1, MMPA.Category != "ND")
 ggplot(d_MMPA, aes(MMPA.Category)) +
-  geom_histogram(stat = count) +
-  geom_density(aes(y = ..count..), col=2) + 
+  geom_bar() +
   facet_wrap(~YEAR) +
   ggtitle("Histogram of MMPA Category ranking") +
   theme(plot.title = element_text(hjust = 0.5)) +
