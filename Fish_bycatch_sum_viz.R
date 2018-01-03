@@ -16,7 +16,7 @@ fish_invert_master$BYCATCH = as.numeric(gsub(",", "", fish_invert_master$BYCATCH
 fish_invert_master$TOTAL.FISHERY.BYCATCH = as.numeric(gsub(",", "", fish_invert_master$TOTAL.FISHERY.BYCATCH))
 fish_invert_master$TOTAL.FISHERY.LANDINGS = as.numeric(gsub(",", "", fish_invert_master$TOTAL.FISHERY.LANDINGS))
 
-#creating a summary table
+# creating a summary tables
 d1 <- fish_invert_master %>%
   filter(UNIT == "POUND") %>% #removes fisheries where the bycatch is by individual
   group_by(FISHERY, YEAR, FISHERY.TYPE, REGION, MMPA.Category)%>%
@@ -26,6 +26,20 @@ d1 <- fish_invert_master %>%
             Bycatch_Ratio = mean(FISHERY.BYCATCH.RATIO)) %>%
   arrange(desc(FISHERY))
 View(d1)
+
+# creating a summary tables
+d_byfish <- fish_invert_master %>%
+  filter(UNIT == "POUND") %>% #removes fisheries where the bycatch is by individual
+  group_by(FISHERY)%>%
+  summarize(Total_Bycatch = mean(TOTAL.FISHERY.BYCATCH),
+            Total_Landings = mean(TOTAL.FISHERY.LANDINGS),
+            Total_Catch = mean(TOTAL.CATCH),
+            Bycatch_Ratio = mean(FISHERY.BYCATCH.RATIO),
+            SE_BR = SE(FISHERY.BYCATCH.RATIO)) %>%
+  arrange(desc(FISHERY))
+View(d_byfish)
+
+
 
 #visualizing data distributions 
 

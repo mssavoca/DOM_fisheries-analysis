@@ -5,6 +5,7 @@ library(data.table)
 library(dplyr)
 library(tidyr)
 
+#setwd("") do this through Files --> settings wheel --> Set as Working Directory
 
 ################
 # code to clean and combine the marine mammal, seabird, and sea turtle csvs
@@ -14,22 +15,22 @@ library(tidyr)
 for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
   path=paste(getwd(),"/",csv,sep="")
   r=read.csv(path)
-  #name=gsub(".csv","",csv)
+  name=gsub(".csv","",csv)
   assign(csv,r)
   print(csv)
 }
 rm(path,r,name,csv)
-#csvlist=ls() #empty
-csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list
+csvlist=ls() #only use this if R environ is empty
+#csvlist=list.files(pattern="*.csv$")  ## OTHERWISE grab list this way if you have any objects in your R environment
 
-x = "PI_FirstEditionUpdate1-2010Data_MarineMammal_By_Fishery_23-MAY-2017.csv"
+#x = "AK_SecondEdition-2014Data_MarineMammal_By_Fishery_13-OCT-2017.csv" # only use to test if code is working, otherwise comment out
 
 # function to clean all the marine mammal, seabird and sea turtles csvs
-#setwd("") do this through Files --> settings wheel --> Set as Working Directory
+
 clean_MM_SB_ST_csv=function(x){
   
   a=read.csv(x,header=FALSE)
-  # a=get(x)
+  #a=get(x)  # use to if code is working, otherwise comment out if testing code
   a=a[c(3:nrow(a)),] ##get rid of first two rows
   rownames(a)=1:nrow(a)
   colnames(a)=as.character(unlist(a[1,])) # makes first row the header
@@ -60,12 +61,12 @@ clean_MM_SB_ST_csv=function(x){
   return(c)
 }
 
-
-# for(csv in csvlist){
-#   a=clean_MM_SB_ST_csv(csv)
-#   assign(csv,a)
-#   #write.csv(a,paste0(folder,"/",csv,".csv")) #### change folder
-# }
+# runs the cleaning function for each .csv in the csvlist
+for(csv in csvlist){
+   a=clean_MM_SB_ST_csv(csv)
+   assign(csv,a)
+   write.csv(a,paste0("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/CSV R code test/","/",csv,".csv")) #### change folder
+}
 
 # for loop that goes through folder and cleans each csv using above function 
 for(csv in csvlist){
@@ -79,7 +80,7 @@ for(csv in csvlist){
 
 ## Read in and combine CSVs into one large data frame
 load_data <- function(path) { 
-  files <- dir(path = "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/MM_SB_ST bycatch/",
+  files <- dir(path = "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/MM_SB_ST bycatch/2014_15 data/",
                pattern = '\\.csv', full.names = TRUE)
   tables <- lapply(files, read.csv)
   tables <- lapply(tables, function(df) mutate_at(df, .cols = c("YEAR"), as.factor)) #changes the YEAR column so that it's always a factor; prevents NAs
@@ -87,10 +88,10 @@ load_data <- function(path) {
 }
 
 # run the function above, loading in and combining all the cleaned data frames
-MM_SB_ST_master_data_frame <- load_data("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/MM_SB_ST bycatch/")
+MM_SB_ST_master_data_frame <- load_data("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/MM_SB_ST bycatch/2014_15 data/")
 
 #output cleaned and combined data frame to csv
-write.csv(MM_SB_ST_master_data_frame, "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Combined CSVs/MM_SB_ST_master_data_frame2.csv")
+write.csv(MM_SB_ST_master_data_frame, "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Combined CSVs/MM_SB_ST_master_data_frame2014_15.csv")
 
 ################
 # code to clean and combine all the marine mammal csvs from the PI region where they have bycatch inside and outside the US EEZ
