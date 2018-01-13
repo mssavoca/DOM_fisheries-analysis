@@ -27,6 +27,13 @@ d1 <- fish_invert_master %>%
   arrange(desc(FISHERY))
 View(d1)
 
+# View each record in by bycatch ratio in descending order
+d_BR <- d1 %>% arrange(desc(Bycatch_Ratio))
+View(d_BR)
+
+pie_highBR <- ggplot(d_BR, aes(FISHERY, color=FISHERY)) +
+              geom_histogram(fill=FISHERY)
+
 # creating a summary tables
 d_byfish <- fish_invert_master %>%
   filter(UNIT == "POUND") %>% #removes fisheries where the bycatch is by individual
@@ -151,5 +158,5 @@ d6 <- d1 %>%
   group_by(FISHERY) %>%
   summarize(Ave_Landings = mean(Total_Landings),
             SE = SE(Total_Landings)) %>%
-  arrange(desc(FISHERY))
+  arrange(desc(Ave_Landings))
 View(d6)
