@@ -37,7 +37,9 @@ d1$BR_level <- ifelse(d1$Bycatch_Ratio > 0.5,"high (>0.5)",
 
 View(d1)
 
+#######
 # bycatch ratio categories by gear type
+#######
 
 ## Change label to ordered
 d1$BR_level <- ordered(d1$BR_level, c("low (<0.2)", "moderate (0.2-0.5)", "high (>0.5)"))
@@ -45,14 +47,62 @@ d1$BR_level <- ordered(d1$BR_level, c("low (<0.2)", "moderate (0.2-0.5)", "high 
 #remove fisheries where we dont know gear type
 d1_cut <- d1[!(d1$FISHERY.TYPE==""), ]
 
+#nicer colors
+# The palette with grey:
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+# The palette with black:
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
 br_gear <- ggplot(d1_cut, aes(BR_level)) +
   geom_bar(aes(fill = FISHERY.TYPE)) +
   ylab("Number of fisheries") +
   xlab("Bycatch level of fish and invertebrates") +
   guides(fill=guide_legend(title="gear type")) +
-  facet_wrap(~YEAR) + 
-  theme_bw()
+  scale_fill_manual(values=cbPalette) +
+  #facet_wrap(~YEAR) + 
+  theme_bw()+
+  theme(axis.title.x = element_text(face="bold", size=12),
+        axis.text.y  = element_text(size=12),
+        axis.text.x = element_text(size=11),
+        axis.title.y = element_text(face="bold",size=12),
+        legend.text=element_text(size=10),
+        strip.text.x = element_text(size = 12))
 br_gear
+
+#save output
+ggsave("Preliminary figures/BR levels by gear type.pdf", br_gear)
+
+
+#######
+# MMPA categories by gear type
+#######
+
+#remove fisheries where we dont know gear type
+d1_cut_MMPA <- d1_cut[!(d1_cut$MMPA.Category=="ND"), ]
+
+## Change label to ordered
+d1_cut_MMPA$MMPA.Category <- ordered(d1_cut_MMPA$MMPA.Category, c("III", "II", "I"))
+
+MMPA <- ggplot(d1_cut_MMPA, aes(MMPA.Category)) +
+  geom_bar(aes(fill = FISHERY.TYPE)) +
+  ylab("Number of fisheries") +
+  xlab("Marine Mammal Protection Act Category") +
+  guides(fill=guide_legend(title="gear type")) +
+  scale_fill_manual(values=cbPalette) +
+  #facet_wrap(~YEAR) + 
+  theme_bw()+
+  theme(axis.title.x = element_text(face="bold", size=12),
+        axis.text.y  = element_text(size=12),
+        axis.text.x = element_text(size=11),
+        axis.title.y = element_text(face="bold",size=12),
+        legend.text=element_text(size=10),
+        strip.text.x = element_text(size = 12))
+MMPA
+
+#save output
+ggsave("Preliminary figures/MMPA categories by gear type.pdf", MMPA)
+
 
 # View each record in by bycatch ratio in descending order
 d_BR <- d1 %>% arrange(desc(Bycatch_Ratio))
