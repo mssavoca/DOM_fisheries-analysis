@@ -21,7 +21,7 @@ o_by_r <- ggplot(nop_sum, aes(Year, Observers)) +
   ylab("Total Observers") +
   theme_bw()
 o_by_r
-ggsave("Preliminary figures/observers by region.pdf", o_by_r)
+ggsave("Preliminary figures/observers by region 2010-2016.pdf", o_by_r)
 
 # At-sea Days by region stacked bar graph
 asd_by_r <- ggplot(nop_sum, aes(Year, `Actual Sea Days`)) +
@@ -29,4 +29,4 @@ asd_by_r <- ggplot(nop_sum, aes(Year, `Actual Sea Days`)) +
   ylab("At-sea Days") +
   theme_bw()
 asd_by_r
-ggsave("Preliminary figures/at sea days by region.pdf", asd_by_r)
+ggsave("Preliminary figures/at sea days by region 2010-2016.pdf", asd_by_r)

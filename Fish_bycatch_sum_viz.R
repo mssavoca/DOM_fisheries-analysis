@@ -16,6 +16,10 @@ fish_invert_master$BYCATCH = as.numeric(gsub(",", "", fish_invert_master$BYCATCH
 fish_invert_master$TOTAL.FISHERY.BYCATCH = as.numeric(gsub(",", "", fish_invert_master$TOTAL.FISHERY.BYCATCH))
 fish_invert_master$TOTAL.FISHERY.LANDINGS = as.numeric(gsub(",", "", fish_invert_master$TOTAL.FISHERY.LANDINGS))
 
+# makes a column turning bycatch levels into three discrete categories 
+fish_invert_master$BR_level <- ifelse(fish_invert_master$FISHERY.BYCATCH.RATIO > 0.5,"high", 
+                                      ifelse(fish_invert_master$FISHERY.BYCATCH.RATIO > 0.2 & fish_invert_master$FISHERY.BYCATCH.RATIO < 0.5, "moderate", "low"))
+
 # creating a summary tables
 d1 <- fish_invert_master %>%
   filter(UNIT == "POUND") %>% #removes fisheries where the bycatch is by individual
@@ -25,7 +29,22 @@ d1 <- fish_invert_master %>%
             Total_Catch = mean(TOTAL.CATCH),
             Bycatch_Ratio = mean(FISHERY.BYCATCH.RATIO)) %>%
   arrange(desc(FISHERY))
+
+# makes a column turning bycatch levels into three discrete categories 
+d1$BR_level <- ifelse(d1$Bycatch_Ratio > 0.5,"high", 
+                                      ifelse(d1$Bycatch_Ratio > 0.2 & d1$Bycatch_Ratio < 0.5, "moderate", "low"))
+
 View(d1)
+
+#bycatch ratio categories by gear type
+### NOT WORKING ###
+
+br_gear <- ggplot(d1, aes(BR_level)) +
+  geom_bar(aes(fill = FISHERY.TYPE)) +
+  ylab("Count") +
+  facet_wrap(~YEAR) + 
+  theme_bw()
+br_gear
 
 # View each record in by bycatch ratio in descending order
 d_BR <- d1 %>% arrange(desc(Bycatch_Ratio))
@@ -160,3 +179,5 @@ d6 <- d1 %>%
             SE = SE(Total_Landings)) %>%
   arrange(desc(Ave_Landings))
 View(d6)
+
+
