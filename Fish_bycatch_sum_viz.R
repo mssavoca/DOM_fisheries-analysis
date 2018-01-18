@@ -6,6 +6,7 @@ library(readxl)
 library(dplyr)
 library(data.table)
 library(ggplot2)
+library(viridis)
 
 #create function for standard error
 SE = function(x){sd(x)/sqrt(sum(!is.na(x)))}
@@ -31,17 +32,24 @@ d1 <- fish_invert_master %>%
   arrange(desc(FISHERY))
 
 # makes a column turning bycatch levels into three discrete categories 
-d1$BR_level <- ifelse(d1$Bycatch_Ratio > 0.5,"high", 
-                                      ifelse(d1$Bycatch_Ratio > 0.2 & d1$Bycatch_Ratio < 0.5, "moderate", "low"))
+d1$BR_level <- ifelse(d1$Bycatch_Ratio > 0.5,"high (>0.5)", 
+                                      ifelse(d1$Bycatch_Ratio > 0.2 & d1$Bycatch_Ratio < 0.5, "moderate (0.2-0.5)", "low (<0.2)"))
 
 View(d1)
 
-#bycatch ratio categories by gear type
-### NOT WORKING ###
+# bycatch ratio categories by gear type
 
-br_gear <- ggplot(d1, aes(BR_level)) +
+## Change label to ordered
+d1$BR_level <- ordered(d1$BR_level, c("low (<0.2)", "moderate (0.2-0.5)", "high (>0.5)"))
+
+#remove fisheries where we dont know gear type
+d1_cut <- d1[!(d1$FISHERY.TYPE==""), ]
+
+br_gear <- ggplot(d1_cut, aes(BR_level)) +
   geom_bar(aes(fill = FISHERY.TYPE)) +
-  ylab("Count") +
+  ylab("Number of fisheries") +
+  xlab("Bycatch level of fish and invertebrates") +
+  guides(fill=guide_legend(title="gear type")) +
   facet_wrap(~YEAR) + 
   theme_bw()
 br_gear
