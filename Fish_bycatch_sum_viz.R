@@ -57,7 +57,7 @@ cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"
 br_gear <- ggplot(d1_cut, aes(BR_level)) +
   geom_bar(aes(fill = FISHERY.TYPE)) +
   ylab("Number of fisheries") +
-  xlab("Bycatch level of fish and invertebrates") +
+  xlab("Bycatch ratio of fish and invertebrates") +
   guides(fill=guide_legend(title="gear type")) +
   scale_fill_manual(values=cbPalette) +
   #facet_wrap(~YEAR) + 
