@@ -21,7 +21,7 @@ fish_invert_master$TOTAL.FISHERY.LANDINGS = as.numeric(gsub(",", "", fish_invert
 fish_invert_master$BR_level <- ifelse(fish_invert_master$FISHERY.BYCATCH.RATIO > 0.5,"high", 
                                       ifelse(fish_invert_master$FISHERY.BYCATCH.RATIO > 0.2 & fish_invert_master$FISHERY.BYCATCH.RATIO < 0.5, "moderate", "low"))
 
-# creating a summary tables
+# creating a summary table
 d1 <- fish_invert_master %>%
   filter(UNIT == "POUND") %>% #removes fisheries where the bycatch is by individual
   group_by(FISHERY, YEAR, FISHERY.TYPE, REGION, MMPA.Category)%>%
@@ -57,7 +57,7 @@ cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"
 br_gear <- ggplot(d1_cut, aes(BR_level)) +
   geom_bar(aes(fill = FISHERY.TYPE)) +
   ylab("Number of fisheries") +
-  xlab("Bycatch level of fish and invertebrates") +
+  xlab("Bycatch ratio of fish and invertebrates") +
   guides(fill=guide_legend(title="gear type")) +
   scale_fill_manual(values=cbPalette) +
   #facet_wrap(~YEAR) + 
