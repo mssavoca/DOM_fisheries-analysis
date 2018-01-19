@@ -19,17 +19,35 @@ MMSBST_master10_13 = filter(MMSBST_master10_13, YEAR %in% c("2010" , "2011" , "2
                               !GROUP == "marine mammal" &
                               !FISHERY.TYPE == "")
 
-# creating a summary table
-d_MMSBST <- MMSBST_master10_13 %>%
-  group_by(FISHERY, YEAR, FISHERY.TYPE, REGION, MMPA.Category)%>%
-  summarize(Total_Bycatch = mean(TOTAL.FISHERY.BYCATCH),
-            Total_Landings = mean(TOTAL.FISHERY.LANDINGS),
-            Total_Catch = mean(TOTAL.CATCH),
-            Bycatch_Ratio = mean(FISHERY.BYCATCH.RATIO)) %>%
-  arrange(desc(FISHERY))
-
 # makes a column turning bycatch levels into three discrete categories 
-d1$BR_level <- ifelse(d1$Bycatch_Ratio > 0.5,"high (>0.5)", 
-                      ifelse(d1$Bycatch_Ratio > 0.2 & d1$Bycatch_Ratio < 0.5, "moderate (0.2-0.5)", "low (<0.2)"))
+MMSBST_master10_13$Bycatch_level <- ifelse(MMSBST_master10_13$TOTAL.FISHERY.BYCATCH > 1000,"high (>1000)", 
+                      ifelse(MMSBST_master10_13$TOTAL.FISHERY.BYCATCH > 50 & MMSBST_master10_13$TOTAL.FISHERY.BYCATCH < 1000, "moderate (50-1000)", "low (<50)"))
 
-View(d1)
+View(MMSBST_master10_13)
+
+
+#nicer colors
+# The palette with grey:
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+# The palette with black:
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+## Change label to ordered
+MMSBST_master10_13$Bycatch_level <- ordered(MMSBST_master10_13$Bycatch_level, c("low (<50)", "moderate (50-1000)", "high (>1000)"))
+
+
+SBST <- ggplot(MMSBST_master10_13, aes(Bycatch_level)) +
+  geom_bar(aes(fill = FISHERY.TYPE)) +
+  ylab("Number of fisheries") +
+  xlab("Total bycatch of seabirds and sea turtles") +
+  guides(fill=guide_legend(title="gear type")) +
+  scale_fill_manual(values=cbPalette) +
+  #facet_wrap(~YEAR) + 
+  theme_bw()+
+  theme(axis.title.x = element_text(face="bold", size=12),
+        axis.text.y  = element_text(size=12),
+        axis.text.x = element_text(size=11),
+        axis.title.y = element_text(face="bold",size=12),
+        legend.text=element_text(size=10),
+        strip.text.x = element_text(size = 12))
+SBST
