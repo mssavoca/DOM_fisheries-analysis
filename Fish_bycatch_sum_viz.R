@@ -124,8 +124,9 @@ d_byfish <- fish_invert_master %>%
 View(d_byfish)
 
 
-
-#visualizing data distributions 
+#############
+#visualizing data distributions with histograms
+#############
 
 #histogram for bycatch ratio by year
 ggplot(data=d1, aes(Bycatch_Ratio)) + 
