@@ -123,28 +123,39 @@ quantile(d_poster_final$Bycatch_Ratio, probs = c(0.33, 0.66), na.rm = TRUE)  # F
 
 # makes a column turning bycatch for seabirds and sea turtles levels into three discrete categories based on terciles of non-zero data
 # first for sea turtles
-d_poster_final$ST_Bycatch_level <- ifelse(d_poster_final$TOTAL_BYCATCH_YEAR_ST > 54,"high (>54)", 
-                                           ifelse(d_poster_final$TOTAL_BYCATCH_YEAR_ST > 20 & d_poster_final$TOTAL_BYCATCH_YEAR_ST < 54, "moderate (20-54)", "low (<20)"))
+d_poster_final$ST_Bycatch_level <- ifelse(d_poster_final$TOTAL_BYCATCH_YEAR_ST > 35,"high (>35)", 
+                                           ifelse(d_poster_final$TOTAL_BYCATCH_YEAR_ST > 1 & d_poster_final$TOTAL_BYCATCH_YEAR_ST < 35, "moderate (1-35)", "none"))
 d_poster_final$ST_Bycatch_level <- as.character(d_poster_final$ST_Bycatch_level)
-d_poster_final$ST_Bycatch_level[is.na(d_poster_final$ST_Bycatch_level)] <- "low (<20)"
+d_poster_final$ST_Bycatch_level[is.na(d_poster_final$ST_Bycatch_level)] <- "none"
+
+#Now turn NAs into 0s
+d_poster_final$TOTAL_BYCATCH_YEAR_ST[is.na(d_poster_final$TOTAL_BYCATCH_YEAR_ST)] <- 0
+
 
 #next for seabirds
-d_poster_final$SB_Bycatch_level <- ifelse(d_poster_final$TOTAL_BYCATCH_YEAR_SB > 158,"high (>158)", 
-                                          ifelse(d_poster_final$TOTAL_BYCATCH_YEAR_SB > 60 & d_poster_final$TOTAL_BYCATCH_YEAR_SB < 158, "moderate (60-158)", "low (<60)"))
-d_poster_final$SB_Bycatch_level <- as.character(d_poster_final$SB_Bycatch_level)
-d_poster_final$SB_Bycatch_level[is.na(d_poster_final$SB_Bycatch_level)] <- "low (<60)"
 
-# Change NA values to zeros must do after above step
+#see where the breaks are if you want to be subjective: 
+hist(d_poster_final$TOTAL_BYCATCH_YEAR_SB, breaks = 100, xlim=c(0,1000))
+
+d_poster_final$SB_Bycatch_level <- ifelse(d_poster_final$TOTAL_BYCATCH_YEAR_SB > 50,"high (>50)", 
+                                          ifelse(d_poster_final$TOTAL_BYCATCH_YEAR_SB > 1 & d_poster_final$TOTAL_BYCATCH_YEAR_SB < 50, "moderate (1-50)", "none"))
+d_poster_final$SB_Bycatch_level <- as.character(d_poster_final$SB_Bycatch_level)
+d_poster_final$SB_Bycatch_level[is.na(d_poster_final$SB_Bycatch_level)] <- "none"
+
+#Now turn NAs into 0s
+d_poster_final$TOTAL_BYCATCH_YEAR_SB[is.na(d_poster_final$TOTAL_BYCATCH_YEAR_SB)] <- 0
+
 
 View(d_poster_final)
 
 
 ## Change categorical labeling to ordered
-d_poster_final$ST_Bycatch_level <- ordered(d_poster_final$ST_Bycatch_level, c("low (<20)", "moderate (20-54)", "high (>54)"))
-d_poster_final$SB_Bycatch_level <- ordered(d_poster_final$SB_Bycatch_level, c("low (<60)", "moderate (60-158)", "high (>158)"))
+d_poster_final$ST_Bycatch_level <- ordered(d_poster_final$ST_Bycatch_level, c("none", "moderate (1-35)", "high (>35)"))
+d_poster_final$SB_Bycatch_level <- ordered(d_poster_final$SB_Bycatch_level, c("none", "moderate (1-50)", "high (>50)"))
 d_poster_final$MMPA.Category <- ordered(d_poster_final$MMPA.Category, c("III", "II", "I"))
 
 d_poster_final2 <- filter(d_poster_final, !FISHERY.TYPE == "troll")
+View(d_poster_final2)
 
 #############
 # final plots
@@ -232,6 +243,10 @@ FishInvert <- ggplot(d_poster_final4, aes(BR_level)) +
 FishInvert
 
 ggsave("Preliminary figures/FishInvert_bycatch_byfishery.pdf", FishInvert)
+
+
+
+
 
 
 # trying some violin plots of the same data
