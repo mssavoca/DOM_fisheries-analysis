@@ -177,7 +177,7 @@ ST <- ggplot(d_poster_final2, aes(ST_Bycatch_level)) +
         strip.text.x = element_text(size = 12))
 ST
 
-ggsave("Preliminary figures/SBST_bycatch_byfishery.pdf", ST)
+ggsave("Preliminary figures/ST_bycatch_byfishery.pdf", ST)
 
 
 SB <- ggplot(d_poster_final2, aes(SB_Bycatch_level)) +
@@ -196,7 +196,7 @@ SB <- ggplot(d_poster_final2, aes(SB_Bycatch_level)) +
         strip.text.x = element_text(size = 12))
 SB
 
-ggsave("Preliminary figures/SBST_bycatch_byfishery.pdf", SB)
+ggsave("Preliminary figures/SB_bycatch_byfishery.pdf", SB)
 
 d_poster_final3 <- filter(d_poster_final2, !MMPA.Category %in% c(NA, "ND"))
 
@@ -239,7 +239,8 @@ FishInvert <- ggplot(d_poster_final4, aes(BR_level)) +
         axis.text.x = element_text(size=11),
         axis.title.y = element_text(face="bold",size=12),
         legend.text=element_text(size=10),
-        strip.text.x = element_text(size = 12))
+        strip.text.x = element_text(size = 12),
+        legend.position = "top")
 FishInvert
 
 ggsave("Preliminary figures/FishInvert_bycatch_byfishery.pdf", FishInvert)
