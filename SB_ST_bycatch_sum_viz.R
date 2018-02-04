@@ -120,6 +120,7 @@ SBST
 
 # New and final plots here: 
 d_poster_final <- read_csv("poster_master_table_corrected.csv")
+save(d_poster_final, file = "fisheries_master_table_corrected.RData")
 
 
 #split data into terciles
