@@ -71,6 +71,7 @@ d_SBST_10_13 <- filter(d_SBST_2, YEAR %in% c("2010", "2011", "2012", "2013") & !
 # to join first read in fish/invert data
 poster_master_table <- full_join(d1_cut, d_SBST_10_13, 
                                   by =  c("YEAR", "REGION", "FISHERY.TYPE", "FISHERY"))
+#View(poster_master_table)
 write_csv(poster_master_table, "poster_master_table.csv")
 
 #split data into terciles
@@ -336,11 +337,13 @@ poster_master_table$Total_Bycatch.y[is.na(poster_master_table$Total_Bycatch.y)] 
 View(poster_master_table)
 
 # Doesn't work because - Warning message:position_dodge requires non-overlapping x intervals
-# FishInvert_V +
-#   geom_boxplot(aes(d_poster_final4$Bycatch_Ratio), alpha = 0.5)
+# FishInvert_V = ggplot(d_poster_final4, aes(reorder(FISHERY.TYPE, Bycatch_Ratio, median), Bycatch_Ratio, 
+#                                             color = FISHERY.TYPE, fill = FISHERY.TYPE)) + 
+#   geom_violin(alpha = 0.5, width = 5) +   coord_flip() + ylim(0,0.25)
+#   geom_jitter(alpha = 0.5, height = 0, width = 0.3)
 # 
 # FishInvert_V
-# 
+ 
 # d_poster_final4$FISHERY.TYPE <- as.factor(d_poster_final4$FISHERY.TYPE)
 # # does any violin plot work?
 # V_try <-  ggplot(aes(x=FISHERY.TYPE, y=Bycatch_Ratio), data = d_poster_final4) +

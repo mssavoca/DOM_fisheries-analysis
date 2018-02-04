@@ -35,7 +35,7 @@ d1 <- fish_invert_master %>%
 d1$BR_level <- ifelse(d1$Bycatch_Ratio > 0.5,"high (>0.5)", 
                                       ifelse(d1$Bycatch_Ratio > 0.2 & d1$Bycatch_Ratio < 0.5, "moderate (0.2-0.5)", "low (<0.2)"))
 
-View(d1)
+#View(d1)
 
 #######
 # bycatch ratio categories by gear type
