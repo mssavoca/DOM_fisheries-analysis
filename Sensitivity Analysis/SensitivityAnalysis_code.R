@@ -94,4 +94,16 @@ par(mar=c(9,4,1,1))
 barplot((round((1+(mean(data$mean_criteria) - (colMeans(sens_anal[,1:13])) / mean(data$mean_criteria)))*100)*-1),
         las=2,ylab="Relative impact")
 
+#----Figure Summary: Correlation Plot example----
+# Visualising total score by fishery and year. 
+#Rows = fishery
+#Columns = years
+#Colour scale = score 
+head(data)
+quartz()
+col.pal <- colorRampPalette(c("#9b59b6","#3498db", "#1abc9c", "#f1c40f","#e67e22", "#e74c3c"))
+levelplot(data$mean_criteria~data$Year*data$Fishery,
+          ylab="",xlab="",main="",scales=list(cex=0.5, tck=c(1,0)),
+          col.regions=col.pal(120))
+#----END----
 beatr("tubular") #end the script with another banger
