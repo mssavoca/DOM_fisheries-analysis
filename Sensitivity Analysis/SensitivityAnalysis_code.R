@@ -96,6 +96,7 @@ barplot((round((1+(mean(data$mean_criteria) - (colMeans(sens_anal[,1:13])) / mea
 
 #----Figure Summary: Correlation Plot example----
 # Visualising total score by fishery and year. 
+#ORDER THIS BY REGION
 #Rows = fishery
 #Columns = years
 #Colour scale = score 
