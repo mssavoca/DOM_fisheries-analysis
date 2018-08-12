@@ -1,4 +1,13 @@
-#steph is helping
+library(tidyr)
+library(readxl)
+library(data.table)
+library(gdata)
+library(xlsx)
+installXLSXsupport()
+
+
+read.xls("AK_SecondEdition-2014Data_Fish_By_Fishery", sheet=1, verbose=FALSE, blank.lines.skip=TRUE, perl="perl")
+
 
 setwd("")
 
@@ -36,7 +45,7 @@ return(f)
 
 clean_fish_csv=function(x){
   
-  a=get(x)
+  a=get("AK_SecondEdition-2014Data_Fish_By_Fishery_13-OCT-2017.csv")
   a=a[c(2:nrow(a)),] ##get rid of first two rows
   rownames(a)=1:nrow(a)
   colnames(a)=as.character(unlist(a[1,])) # makes first row the header
@@ -46,8 +55,8 @@ clean_fish_csv=function(x){
   a$`COMMON NAME`=as.character(a$`COMMON NAME`)
   a$FISHERY=ifelse(a$`BYCATCH`==""& a$YEAR=="",a$`COMMON NAME`,a$FISHERY)
   
-  #a$BYCATCH = as.numeric(gsub(",", "", a$BYCATCH))
-  #a$BYCATCH=as.numeric(a$BYCATCH)
+  a$BYCATCH = as.numeric(gsub(",", "", a$BYCATCH)) #takes out the commas and makes changes the character type from factor to numeric
+  a$BYCATCH=as.numeric(a$BYCATCH)
   
   b=fill(a,FISHERY,.direction = "down") #fill in the fishery name; somehow knows to stop and restart with each new fishery
   
@@ -101,10 +110,14 @@ clean_fish_csv=function(x){
 for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
   path=paste(getwd(),"/",csv,sep="")
   r=read.csv(path)
-  #name=gsub(".csv","",csv)
+  name=gsub(".csv","",csv)
   assign(csv,r)
   print(csv)
+  
+    a=clean_fish_csv(csv)
+    assign(csv,a)
 }
+
 rm(path,r,name,csv)
 csvlist=ls() #empty
 

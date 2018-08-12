@@ -180,20 +180,20 @@ write.csv(MM_PI_master_data_frame, "/Users/matthewsavoca/Documents/Research Data
 #setwd("") do this through Files --> settings wheel --> Set as Working Directory
 
 #first read in all CSVs and put them in an R list object
-# for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
-#   path=paste(getwd(),"/",csv,sep="")
-#   r=read.csv(path)
-#   #name=gsub(".csv","",csv)
-#   assign(csv,r)
-#   print(csv)
-# }
+for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
+  path=paste(getwd(),"/",csv,sep="")
+  r=read.csv(path)
+  #name=gsub(".csv","",csv)
+  assign(csv,r)
+  print(csv)
+}
 # rm(path,r,name,csv)
-# #csvlist=ls() #empty
+csvlist=ls() #empty
 # csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list where you dont have to remove history 
 # 
 # #setwd("") do this through Files --> settings wheel --> Set as Working Directory
 # 
- a=`AK_SecondEdition_2014Data_Fish_By_Fishery_27-FEB-2018.csv`
+ a=`NE_SecondEdition_2015Data_Fish_By_Fishery_27-FEB-2018.csv`
 # for(i in 1:ncol(a)){  #----------> columns needed to be converted from factors to character
 #   a[,i]=as.character(a[,i])
 # }
@@ -223,7 +223,6 @@ clean_fish_csv=function(x){
   a$`COMMON NAME`=as.character(a$`COMMON NAME`)
   a$FISHERY=ifelse(a$`BYCATCH`==""& a$YEAR=="",a$`COMMON NAME`,a$FISHERY) ## PI REGION DOES BYCATCH DIFFERENTLY, LIVE + DEAD, MESSES UP THIS CODE, took out the PI code for now 
   
-  a=a[1:765,]
   a$FISHERY=as.factor(a$FISHERY)
   a$FISHERY=gsub("##","",a$FISHERY)
   a$FISHERY=gsub("%%","",a$FISHERY)
@@ -299,6 +298,8 @@ for(csv in csvlist){
   }
 }
 
+write.csv(f,"NE_SecondEdition_2014Data_Fish_By_Fishery_27-FEB-2018.csv")
+
 ## Read in and combine CSVs into one large data frame
 load_data <- function(path) { 
   files <- dir(path = "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch/2014-15_cleaned/",
@@ -336,22 +337,36 @@ csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list where you 
 
 #setwd("") do this through Files --> settings wheel --> Set as Working Directory
 
-#x = "PI_FirstEditionUpdate2-2013Data_Fish_By_Fishery_23-MAY-2017.csv" #testing out on one dataframe if loop doesn't work
+a = `PI_SecondEdition_2015Data_Fish_By_Fishery_22-FEB-2018.csv` #testing out on one dataframe if loop doesn't work
+
 
 clean_fish_PI_csv=function(x){
   
-  a=read.csv(x,header=FALSE)
-  # a=get(x)
-  a=a[c(3:nrow(a)),] ##get rid of first two rows
-  rownames(a)=1:nrow(a)
-  colnames(a)=as.character(unlist(a[1,])) # makes first row the header
-  a=a[-1,] #removes the first row
+  a=read.csv(x,header=T)
+  
+  for(i in 1:ncol(a)){ #------> once you've debugged, put it here
+    a[,i]=as.character(a[,i])
+  }
+  # 
+  #a=get(x)
+  #colnames(a) <- c("COMMON NAME","SCIENTIFIC NAME","YEAR","BYCATCH","UNIT","CV","FOOTNOTES","NA","NA","NA","NA")
+  
+  colnames(a)=a[1,] #make the first row the column names
+  
+  a=a[c(2:nrow(a)),] ##get rid of first row
+  #rownames(a)=1:nrow(a)
+  #colnames(a)=as.character(unlist(a[1,])) # makes first row the header
+  #colnames(a) <- rep("t",11)
+  #a=a[-1,] #removes the first row
   
   a$REGION = substr(x, start = 1, stop = 2) # creates a new column REGION and populates it with the first two characters of the filename
   
+  a=a[1:189,]
   a$FISHERY=NA
+  
   a$`COMMON NAME`=as.character(a$`COMMON NAME`)
   a$FISHERY=ifelse(a$`BYCATCH (LIVE+DEAD)`==""& a$YEAR=="",a$`COMMON NAME`,a$FISHERY) ## PI REGION DOES BYCATCH DIFFERENTLY, LIVE + DEAD, MESSES UP THIS CODE, took out the PI code for now 
+  a=a[,c(1:8,11,12)]
   
   b=fill(a,FISHERY,.direction = "down") #fill in the fishery name; somehow knows to stop and restart with each new fishery
   
@@ -406,7 +421,7 @@ for(csv in csvlist){
     print(csv)
     a=clean_fish_PI_csv(csv)
     assign(csv,a)
-    write.csv(a,paste0("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch_PI region/",csv)) #### change folder
+    write.csv(a,paste0("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch_PI region/2014_15/",csv)) #### change folder
   }
 }
 
@@ -420,7 +435,7 @@ load_data <- function(path) {
 }
 
 # run the function above, loading in and combining all the cleaned data frames
-Fish_PI_master_data_frame <- load_data("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch_PI region/")
+Fish_PI_master_data_frame <- load_data("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch_PI region/2014_15/")
 
 #output cleaned and combined data frame to csv
 write.csv(Fish_PI_master_data_frame, "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Combined CSVs/Fish_PI_master_data_frame.csv")

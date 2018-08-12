@@ -193,15 +193,28 @@ csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list where you 
 
 #setwd("") do this through Files --> settings wheel --> Set as Working Directory
 
-#x="AK_FirstEditionUpdate1-2010Data_Fish_By_Fishery_25-APR-2017.csv"
+a=`AK_SecondEdition_2014Data_Fish_By_Fishery_27-FEB-2018.csv`
+for(i in 1:ncol(a)){  #----------> columns needed to be converted from factors to character
+  a[,i]=as.character(a[,i])
+}
 
 clean_fish_csv=function(x){
   
   a=read.csv(x,header=FALSE)
-  # a=get(x)
-  a=a[c(3:nrow(a)),] ##get rid of first two rows
+  
+  # for(i in 1:ncol(a)){ #------> once you've debugged, put it here
+  #   a[,i]=as.character(a[,i])
+  # }
+  # 
+  #a=get(x)
+   #colnames(a) <- c("COMMON NAME","SCIENTIFIC NAME","YEAR","BYCATCH","UNIT","CV","FOOTNOTES","NA","NA","NA","NA")
+
+  colnames(a)=a[1,] #make the first row the column names
+  
+  a=a[c(2:nrow(a)),] ##get rid of first row
   rownames(a)=1:nrow(a)
   colnames(a)=as.character(unlist(a[1,])) # makes first row the header
+  colnames(a) <- rep("t",11)
   a=a[-1,] #removes the first row
   
   a$REGION = substr(x, start = 1, stop = 2) # creates a new column REGION and populates it with the first two characters of the filename

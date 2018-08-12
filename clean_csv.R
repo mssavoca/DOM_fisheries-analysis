@@ -7,8 +7,8 @@ library(tidyr)
 library(readxl)
 library(data.table)
 
-setwd("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/")
-a=read.csv("DOM fishery analysis/Original CSVs/WC_FirstEditionUpdate2-2013Data_Fish_By_Fishery.csv", header = FALSE)
+setwd("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Original CSVs/nbrfishbyfisheryestimates20142015/")
+a=read.csv("AK_SecondEdition-2014Data_Fish_By_Fishery_13-OCT-2017.csv", header = FALSE)
 a=a[c(3:nrow(a)),] ##get rid of first two rows
 
 rownames(a)=1:nrow(a)
@@ -30,12 +30,14 @@ b$fishery=as.factor(b$fishery)
 b=b[-which(b$`YEAR`==""),] #changed from Scientific name to Year, because some sci names are missing (e.g., "Jellyfish (unidentified)")
 head(b)
 
+b$BYCATCH = as.numeric(b$BYCATCH)
+
 c=b[which(b$`YEAR`==""),] #changed from Scientific name to Year, because some sci names are missing (e.g., "Jellyfish (unidentified)")
 c=b[b$YEAR=="",]
 head(c)
 
 #Trying to make a new column for Total bycatch by fishery
-b$TOTAL_BYCATCH = apply(b[,c('BYCATCH', 'FISHERY')], 1, function(x) sum(x))
+b$TOTAL_BYCATCH = apply(b[,c('BYCATCH', 'fishery')], 1, function(x) sum(x))
 
 # This doesn't work
 DT <- data.table(b, key = c("fishery"))
