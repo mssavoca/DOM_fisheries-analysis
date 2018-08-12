@@ -6,6 +6,7 @@ library(readxl)
 library(dplyr)
 library(data.table)
 library(ggplot2)
+library(viridis)
 
 #create function for standard error
 SE = function(x){sd(x)/sqrt(sum(!is.na(x)))}
@@ -16,7 +17,11 @@ fish_invert_master$BYCATCH = as.numeric(gsub(",", "", fish_invert_master$BYCATCH
 fish_invert_master$TOTAL.FISHERY.BYCATCH = as.numeric(gsub(",", "", fish_invert_master$TOTAL.FISHERY.BYCATCH))
 fish_invert_master$TOTAL.FISHERY.LANDINGS = as.numeric(gsub(",", "", fish_invert_master$TOTAL.FISHERY.LANDINGS))
 
-#creating a summary table
+# makes a column turning bycatch levels into three discrete categories 
+fish_invert_master$BR_level <- ifelse(fish_invert_master$FISHERY.BYCATCH.RATIO > 0.5,"high", 
+                                      ifelse(fish_invert_master$FISHERY.BYCATCH.RATIO > 0.2 & fish_invert_master$FISHERY.BYCATCH.RATIO < 0.5, "moderate", "low"))
+
+# creating a summary table
 d1 <- fish_invert_master %>%
   filter(UNIT == "POUND") %>% #removes fisheries where the bycatch is by individual
   group_by(FISHERY, YEAR, FISHERY.TYPE, REGION, MMPA.Category)%>%
@@ -25,9 +30,103 @@ d1 <- fish_invert_master %>%
             Total_Catch = mean(TOTAL.CATCH),
             Bycatch_Ratio = mean(FISHERY.BYCATCH.RATIO)) %>%
   arrange(desc(FISHERY))
-View(d1)
 
-#visualizing data distributions 
+# makes a column turning bycatch levels into three discrete categories 
+d1$BR_level <- ifelse(d1$Bycatch_Ratio > 0.5,"high (>0.5)", 
+                                      ifelse(d1$Bycatch_Ratio > 0.2 & d1$Bycatch_Ratio < 0.5, "moderate (0.2-0.5)", "low (<0.2)"))
+
+#View(d1)
+
+#######
+# bycatch ratio categories by gear type
+#######
+
+## Change label to ordered
+d1$BR_level <- ordered(d1$BR_level, c("low (<0.2)", "moderate (0.2-0.5)", "high (>0.5)"))
+
+#remove fisheries where we dont know gear type
+d1_cut <- d1[!(d1$FISHERY.TYPE==""), ]
+
+#nicer colors
+# The palette with grey:
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+# The palette with black:
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
+br_gear <- ggplot(d1_cut, aes(BR_level)) +
+  geom_bar(aes(fill = FISHERY.TYPE)) +
+  ylab("Number of fisheries") +
+  xlab("Bycatch ratio of fish and invertebrates") +
+  guides(fill=guide_legend(title="gear type")) +
+  scale_fill_manual(values=cbPalette) +
+  #facet_wrap(~YEAR) + 
+  theme_bw()+
+  theme(axis.title.x = element_text(face="bold", size=12),
+        axis.text.y  = element_text(size=12),
+        axis.text.x = element_text(size=11),
+        axis.title.y = element_text(face="bold",size=12),
+        legend.text=element_text(size=10),
+        strip.text.x = element_text(size = 12))
+br_gear
+
+#save output
+ggsave("Preliminary figures/BR levels by gear type.pdf", br_gear)
+
+
+#######
+# MMPA categories by gear type
+#######
+
+#remove fisheries where we dont know gear type
+d1_cut_MMPA <- d1_cut[!(d1_cut$MMPA.Category=="ND"), ]
+
+## Change label to ordered
+d1_cut_MMPA$MMPA.Category <- ordered(d1_cut_MMPA$MMPA.Category, c("III", "II", "I"))
+
+MMPA <- ggplot(d1_cut_MMPA, aes(MMPA.Category)) +
+  geom_bar(aes(fill = FISHERY.TYPE)) +
+  ylab("Number of fisheries") +
+  xlab("Marine Mammal Protection Act Category") +
+  guides(fill=guide_legend(title="gear type")) +
+  scale_fill_manual(values=cbPalette) +
+  #facet_wrap(~YEAR) + 
+  theme_bw()+
+  theme(axis.title.x = element_text(face="bold", size=12),
+        axis.text.y  = element_text(size=12),
+        axis.text.x = element_text(size=11),
+        axis.title.y = element_text(face="bold",size=12),
+        legend.text=element_text(size=10),
+        strip.text.x = element_text(size = 12))
+MMPA
+
+#save output
+ggsave("Preliminary figures/MMPA categories by gear type.pdf", MMPA)
+
+
+# View each record in by bycatch ratio in descending order
+d_BR <- d1 %>% arrange(desc(Bycatch_Ratio))
+View(d_BR)
+
+pie_highBR <- ggplot(d_BR, aes(FISHERY, color=FISHERY)) +
+              geom_histogram(fill=FISHERY)
+
+# creating a summary tables
+d_byfish <- fish_invert_master %>%
+  filter(UNIT == "POUND") %>% #removes fisheries where the bycatch is by individual
+  group_by(FISHERY)%>%
+  summarize(Total_Bycatch = mean(TOTAL.FISHERY.BYCATCH),
+            Total_Landings = mean(TOTAL.FISHERY.LANDINGS),
+            Total_Catch = mean(TOTAL.CATCH),
+            Bycatch_Ratio = mean(FISHERY.BYCATCH.RATIO),
+            SE_BR = SE(FISHERY.BYCATCH.RATIO)) %>%
+  arrange(desc(FISHERY))
+View(d_byfish)
+
+
+#############
+#visualizing data distributions with histograms
+#############
 
 #histogram for bycatch ratio by year
 ggplot(data=d1, aes(Bycatch_Ratio)) + 
@@ -137,5 +236,7 @@ d6 <- d1 %>%
   group_by(FISHERY) %>%
   summarize(Ave_Landings = mean(Total_Landings),
             SE = SE(Total_Landings)) %>%
-  arrange(desc(FISHERY))
+  arrange(desc(Ave_Landings))
 View(d6)
+
+
