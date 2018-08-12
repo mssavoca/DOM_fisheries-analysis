@@ -193,7 +193,7 @@ csvlist=ls() #empty
 # 
 # #setwd("") do this through Files --> settings wheel --> Set as Working Directory
 # 
- a=`NE_SecondEdition_2015Data_Fish_By_Fishery_27-FEB-2018.csv`
+ a=`WC_SecondEdition_2015Data_Fish_By_Fishery_27-FEB-2018.csv`
 # for(i in 1:ncol(a)){  #----------> columns needed to be converted from factors to character
 #   a[,i]=as.character(a[,i])
 # }
@@ -298,19 +298,22 @@ for(csv in csvlist){
   }
 }
 
-write.csv(f,"NE_SecondEdition_2014Data_Fish_By_Fishery_27-FEB-2018.csv")
+#write.csv(f,"WC_SecondEdition_2015Data_Fish_By_Fishery_27-FEB-2018.csv")  # when automated code isn't working used this to manually export each file
+
+
+
 
 ## Read in and combine CSVs into one large data frame
 load_data <- function(path) { 
   files <- dir(path = "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch/2014-15_cleaned/",
                pattern = '\\.csv', full.names = TRUE)
   tables <- lapply(files, read.csv)
-  #tables <- lapply(tables, function(df) mutate_at(df, .cols = c("YEAR"), as.factor)) #changes the YEAR column so that it's always a factor; prevents NAs
+  tables <- lapply(tables, function(df) mutate_at(df, .cols = c("YEAR"), as.factor)) #changes the YEAR column so that it's always a factor; prevents NAs
   do.call(rbind, tables)
 }
 
 # run the function above, loading in and combining all the cleaned data frames
-Fish_master_data_frame <- load_data("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch/")
+Fish_master_data_frame14_15 <- load_data("/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Cleaned CSVs/Fish bycatch/2014-15_cleaned/")
 
 #output cleaned and combined data frame to csv
 write.csv(Fish_master_data_frame, "/Users/matthewsavoca/Documents/Research Data/CASG_NOAA/DOM fishery analysis/Combined CSVs/Fish_master_data_frame2.csv")
