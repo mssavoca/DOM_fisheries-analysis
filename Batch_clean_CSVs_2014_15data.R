@@ -5,6 +5,7 @@ library(data.table)
 library(dplyr)
 library(tidyr)
 
+setwd("/Users/heatherwelch/Desktop/nbrfishbyfisheryestimates20142015")
 
 ################
 # code to clean and combine the marine mammal, seabird, and sea turtle csvs
@@ -18,7 +19,7 @@ for (csv in list.files(pattern="*.csv$",recursive = TRUE)){
   assign(csv,r)
   print(csv)
 }
-rm(path,r,name,csv)
+rm(path,r,csv)
 #csvlist=ls() #empty
 csvlist=list.files(pattern="*.csv$")  ## alternative way to grab list
 

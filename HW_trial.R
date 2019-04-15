@@ -33,4 +33,3 @@ c=fill(b,TOTAL.FISHERY.BYCATCH,.direction = "up")
 
 c=c[-which(c$`COMMON NAME`=="TOTAL FISHERY BYCATCH"),]
 
-
