@@ -200,17 +200,22 @@ ggarrange(BR_gear, B_indSBST_gear, MMPA_gear,
 # Figure 3 ----
 #################
 
+# Get 50 and 75% quantile breaks for all fishery-years scores
+quantile(d1$mean_criteria, probs = c(0.5, 0.75), na.rm = TRUE)
+
 # overall histogram of mean criteria score
 mean_score_hist <- ggplot(d1, aes(mean_criteria)) +
   geom_histogram(binwidth = 0.05, color="black", fill="gray80") +
   xlab("Overall fishery score (average of all criteria)") +
   ylim(-10,160) +
-  annotate("text", x = c(0.05, 0.3), y= -7, 
-           label = c("better performing", "worse performing")) +
+  # annotate("text", x = c(0.05, 0.3), y= -7, 
+  #          label = c("better performing", "worse performing")) +
   #geom_density(alpha=.2, fill="#FF6666") +
   #facet_wrap(.~GearType_general) +
+  geom_vline(xintercept = c(0.07810263, 0.14722190), color = "blue", linetype = "dashed") +
   theme_classic()
 mean_score_hist 
+
 
 #density plot by region
 #d1$Region <- ordered(d1$Region, levels = c("PI", "SE", "NE", "WC", "AK"))
