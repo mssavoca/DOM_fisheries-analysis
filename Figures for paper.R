@@ -203,10 +203,11 @@ ggarrange(BR_gear, B_indSBST_gear, MMPA_gear,
 # Get 50 and 75% quantile breaks for all fishery-years scores
 quantile(d1$mean_criteria, probs = c(0.5, 0.75), na.rm = TRUE)
 
+
 # overall histogram of mean criteria score
 mean_score_hist <- ggplot(d1, aes(mean_criteria)) +
   geom_histogram(binwidth = 0.05, color="black", fill="gray80") +
-  xlab("Overall fishery score (average of all criteria)") +
+  xlab("Relative Bycatch Index (RBI)") +
   ylim(-10,160) +
   # annotate("text", x = c(0.05, 0.3), y= -7, 
   #          label = c("better performing", "worse performing")) +
@@ -216,6 +217,22 @@ mean_score_hist <- ggplot(d1, aes(mean_criteria)) +
   theme_classic()
 mean_score_hist 
 
+
+#density plot by gear type
+dens_by_GT <- ggplot(d1, aes(mean_criteria, fct_reorder(GearType_general, mean_criteria, .desc = TRUE), 
+                             fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 0.85,
+                               jittered_points = TRUE,
+                               position = position_points_jitter(width = 0.05, height = 0),
+                               point_shape = '|', point_size = 3, point_alpha = 1, alpha = 0.3,
+                               show.legend = FALSE) +
+  ylab("Gear Type") +
+  # annotate("text", x = c(0.05, 0.3), y= 0.65, 
+  #          label = c("better performing", "worse performing")) +
+  scale_fill_viridis(name = "mean_criteria", option = "B") +
+  xlab("RBI") +
+  theme_classic()
+dens_by_GT
 
 #density plot by region
 #d1$Region <- ordered(d1$Region, levels = c("PI", "SE", "NE", "WC", "AK"))
@@ -231,7 +248,7 @@ dens_by_region <- ggplot(d1, aes(mean_criteria, fct_reorder(Region, mean_criteri
   # annotate("text", x = c(0.05, 0.3), y= 0.65,
   #          label = c("better performing", "worse performing")) +
   scale_fill_viridis(name = "mean_criteria", option = "B") +
-  xlab("Overall fishery score") +
+  xlab("RBI") +
   theme_classic()
 dens_by_region + guides(size = FALSE)
 
@@ -248,32 +265,15 @@ dens_by_year <- ggplot(d1, aes(mean_criteria, fct_relevel(Year, "2015", "2014", 
   # annotate("text", x = c(0.05, 0.3), y= 0.65, 
   #          label = c("better performing", "worse performing")) +
   scale_fill_viridis(name = "mean_criteria", option = "B") +
-  xlab("Overall fishery score") +
+  xlab("RBI") +
   theme_classic()
 dens_by_year
 
 
 
-#density plot by gear type
-dens_by_GT <- ggplot(d1, aes(mean_criteria, fct_reorder(GearType_general, mean_criteria, .desc = TRUE), 
-                               fill = ..x..)) +
-  geom_density_ridges_gradient(scale = 0.85,
-                               jittered_points = TRUE,
-                               position = position_points_jitter(width = 0.05, height = 0),
-                               point_shape = '|', point_size = 3, point_alpha = 1, alpha = 0.3,
-                               show.legend = FALSE) +
-  ylab("Gear Type") +
-  # annotate("text", x = c(0.05, 0.3), y= 0.65, 
-  #          label = c("better performing", "worse performing")) +
-  scale_fill_viridis(name = "mean_criteria", option = "B") +
-  xlab("Overall fishery score") +
-  theme_classic()
-dens_by_GT
-
-
 #combine plots into one mega figure
 ggarrange(mean_score_hist,                                        # First row with scatter plot
-          ggarrange(dens_by_region, dens_by_year, dens_by_GT, 
+          ggarrange(dens_by_GT, dens_by_region, dens_by_year, 
                     ncol = 3, labels = c("B", "C", "D")), # Second row with box and dot plots
                       nrow = 2, labels = "A" )                    # Labels of the scatter plot
 
