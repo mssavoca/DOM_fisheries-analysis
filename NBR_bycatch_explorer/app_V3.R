@@ -3,43 +3,17 @@
 source("2_load_libraries.R")
 library(tidyverse)
 library(plotly)
-master=read.csv("data/All_bycatch_data_2010_2015.csv") %>% select(-c(CV,FOOTNOTE.S.,FISHERY.TYPE.GENERAL,FISHERY.TYPE.SPECIFIC)) %>% .[complete.cases(.[,c(6,9,10)]),] %>% mutate(NUM.FISH=rep(1,nrow(.)))
-master_raw=read.csv("data/All_bycatch_data_2010_2015.csv") %>% select(-c(CV,FOOTNOTE.S.,FISHERY.TYPE.GENERAL,FISHERY.TYPE.SPECIFIC)) %>% .[complete.cases(.[,c(6,9,10)]),] %>% mutate(NUM.FISH=rep(1,nrow(.)))
+master=read.csv("data/All_bycatch_data_2010_2015.csv") %>% select(-c(CV,FOOTNOTE.S.,FISHERY.TYPE.GENERAL,FISHERY.TYPE.SPECIFIC)) %>% .[complete.cases(.[,c(6,9,10)]),] %>% mutate(NUM.FISH=seq(1:nrow(.)))
 master[master=="Pot"]<-"pot"
 master[master=="NW"]<-"WC"
 master[master=="SW"]<-"WC"
 
-### code to split mammals by year ####
-# a=master %>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL")
-# new=list()
-# for(i in 1:nrow(a)){
-#   print(i)
-#   if(nchar(as.character(a$YEAR[i]))>4){
-#     b=strsplit(as.character(a$YEAR[i]),"-")
-#     c=lapply(b,function(x)paste0(x,"-01-01"))
-#     d=interval(c[[1]][1],c[[1]][2])
-#     e=time_length(d,unit="year")+1
-#     bycatch=a$TOTAL.FISHERY.BYCATCH.MM[i]/e
-#     f=a %>% slice(rep(i,each=e))
-#     f$TOTAL.FISHERY.BYCATCH.MM=bycatch
-#     f$YEAR=seq(b[[1]][1],b[[1]][2])
-#     new[[length(new)+1]] <- f
-#   }
-# }
-# 
-# test=do.call("rbind",new)
-# other=master%>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL") %>% filter(nchar(as.character(YEAR))==4)
-# final=rbind(test,other)
-# write.csv(final,"data/mammals_by_year.csv",row.names = F)
-#####
-mammals=read.csv("data/mammals_by_year.csv")
-
 group=unique(master$GROUP)%>% .[complete.cases(.)]
 year=c(2010,2011,2012,2013,2014,2015)
 region=as.factor(master$REGION) %>% unique()
-fishery=unique(master$FISHERY)%>% .[complete.cases(.)] %>% as.character() %>% sort()
+fishery=unique(master$FISHERY)%>% .[complete.cases(.)] %>% as.character()
 fishery=c("Don't filter",fishery)
-species=unique(master$SCIENTIFIC.NAME)  %>% .[complete.cases(.)] %>% as.character()%>% sort()
+species=unique(master$SCIENTIFIC.NAME)  %>% .[complete.cases(.)] %>% as.character()
 species=c("Don't filter",species)
 gear=unique(master$FISHERY.TYPE)
 
@@ -70,6 +44,11 @@ ui <- dashboardPage(skin = "black",
                               conditionalPanel("input.sidebarmenu ==='raw'",
                                                selectInput("raw_species","Filter species",species,width = "100%"),
                                                selectInput("raw_fishery","Filter fishery",fishery,width = "100%"),
+                                               # selectInput("raw_group","Filter species group",group,width = "50%"),
+                                               # selectInput("raw_year","Filter year",year,width = "50%"),
+                                               # selectInput("raw_region","Filter region",region,width = "50%"),
+                                               # selectInput("raw_gear","Filter gear",gear,width = "50%"),
+                                               # div(style="text-align:center",downloadButton("downloadData", label = h6(style="color:black","Download filtered dataset"))),
                                                div(style="text-align:center",downloadButton("downloadDataF", label = h6(style="color:black","Download full dataset")))
                               )
                                )),
@@ -84,7 +63,7 @@ ui <- dashboardPage(skin = "black",
         )),
        tabItem(tabName = "fishing",
                fluidRow(
-                 column(h5(""),width=12,plotOutput("gear_ll",height = '700px')))
+                 column(h5(""),width=12,plotOutput("gear_ll")))
                ),
        tabItem(tabName = "raw",
                fluidRow(
@@ -97,7 +76,7 @@ ui <- dashboardPage(skin = "black",
    
 
 
-server <- shinyServer(function(input, output,session) {
+server <- shinyServer(function(input, output) {
 
    output$Fish<-renderPlot({
     value=input$choice_sp
@@ -114,7 +93,7 @@ server <- shinyServer(function(input, output,session) {
     if(value=="Region"){
       a=master %>% filter(GROUP=="invertebrate"|GROUP=="fish") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% filter(UNIT=="POUND") %>% 
         group_by(YEAR,FISHERY,REGION) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.FISH.INVERT)) %>% group_by(YEAR,REGION) %>% summarise(newcol=sum(newcol))
-      b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+ theme_bw()+
+      b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity")+ theme_bw()+
         theme(panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               strip.background = element_blank(),
@@ -124,7 +103,7 @@ server <- shinyServer(function(input, output,session) {
     if(value=="Fishery type"){
       a=master %>% filter(GROUP=="invertebrate"|GROUP=="fish") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% filter(UNIT=="POUND") %>% 
         group_by(YEAR,FISHERY,FISHERY.TYPE) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.FISH.INVERT)) %>% group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=sum(newcol))
-      b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=FISHERY.TYPE),stat="identity", position = position_dodge())+ theme_bw()+
+      b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=FISHERY.TYPE),stat="identity")+ theme_bw()+
         theme(panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               strip.background = element_blank(),
@@ -136,9 +115,9 @@ server <- shinyServer(function(input, output,session) {
    
    output$Mammals<-renderPlot({
      value=input$choice_sp
-
+     
      if(value=="Don't subdivide"){
-       a=mammals %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
+       a=master %>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL") %>% 
          group_by(YEAR,FISHERY) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.MM)) %>% group_by(YEAR) %>% summarise(newcol=sum(newcol))
        b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+ theme_bw()+
        theme(panel.grid.major = element_blank(),
@@ -147,9 +126,9 @@ server <- shinyServer(function(input, output,session) {
              panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")
      }
      if(value=="Region"){
-       a=mammals %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
+       a=master %>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL") %>% 
          group_by(YEAR,FISHERY,REGION) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.MM)) %>% group_by(YEAR,REGION) %>% summarise(newcol=sum(newcol))
-       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+ theme_bw()+
+       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity")+ theme_bw()+
        theme(panel.grid.major = element_blank(),
              panel.grid.minor = element_blank(),
              strip.background = element_blank(),
@@ -157,9 +136,9 @@ server <- shinyServer(function(input, output,session) {
          scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"))
      }
      if(value=="Fishery type"){
-       a=mammals %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
+       a=master %>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL") %>% 
          group_by(YEAR,FISHERY,FISHERY.TYPE) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.MM)) %>% group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=sum(newcol))
-       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=FISHERY.TYPE),stat="identity", position = position_dodge())+ theme_bw()+
+       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=FISHERY.TYPE),stat="identity")+ theme_bw()+
        theme(panel.grid.major = element_blank(),
              panel.grid.minor = element_blank(),
              strip.background = element_blank(),
@@ -184,7 +163,7 @@ server <- shinyServer(function(input, output,session) {
      if(value=="Region"){
        a=master %>% filter(GROUP=="seabird"|GROUP=="sea turtle") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015)%>% filter(UNIT=="INDIVIDUAL") %>% 
          group_by(YEAR,FISHERY,REGION) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.SBST)) %>% group_by(YEAR,REGION) %>% summarise(newcol=sum(newcol))
-       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+ theme_bw()+
+       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity")+ theme_bw()+
          theme(panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
@@ -194,7 +173,7 @@ server <- shinyServer(function(input, output,session) {
      if(value=="Fishery type"){
        a=master %>% filter(GROUP=="seabird"|GROUP=="sea turtle") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015)%>% filter(UNIT=="INDIVIDUAL") %>% 
          group_by(YEAR,FISHERY,FISHERY.TYPE) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.SBST)) %>% group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=sum(newcol))
-       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=FISHERY.TYPE),stat="identity", position = position_dodge())+ theme_bw()+
+       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol,fill=FISHERY.TYPE),stat="identity")+ theme_bw()+
          theme(panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
@@ -216,10 +195,10 @@ server <- shinyServer(function(input, output,session) {
      
      if(metric()=="FISHERY.BYCATCH.RATIO"){
        a=master %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
-         group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=mean(FISHERY.BYCATCH.RATIO,na.rm=T)) 
+         group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=mean(FISHERY.BYCATCH.RATIO,na.rm=T))
 
        aa=master %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
-         group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=mean(FISHERY.BYCATCH.RATIO,na.rm=T)) 
+         group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=mean(FISHERY.BYCATCH.RATIO,na.rm=T))
 
      if(value=="Don't subdivide"){
        b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
@@ -229,7 +208,7 @@ server <- shinyServer(function(input, output,session) {
                panel.border = element_rect(colour = "black"))+ylab("Bycatch ratio")+xlab("Year")
      }
      if(value=="Region"){
-       b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
+       b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
          theme(panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
@@ -240,10 +219,10 @@ server <- shinyServer(function(input, output,session) {
      
      if(metric()=="TOTAL.FISHERY.LANDINGS"){
        a=master %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
-         group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=sum(TOTAL.FISHERY.LANDINGS,na.rm=T))
+         group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=mean(TOTAL.FISHERY.LANDINGS,na.rm=T))
        
        aa=master %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
-         group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=sum(TOTAL.FISHERY.LANDINGS,na.rm=T))
+         group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=mean(TOTAL.FISHERY.LANDINGS,na.rm=T))
        
        if(value=="Don't subdivide"){
          b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
@@ -253,7 +232,7 @@ server <- shinyServer(function(input, output,session) {
                  panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")
        }
        if(value=="Region"){
-         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
+         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
@@ -264,10 +243,10 @@ server <- shinyServer(function(input, output,session) {
      
      if(metric()=="TOTAL.CATCH"){
        a=master %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
-         group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=sum(TOTAL.CATCH,na.rm=T))
+         group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=mean(TOTAL.CATCH,na.rm=T))
        
        aa=master %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
-         group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=sum(TOTAL.CATCH,na.rm=T))
+         group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=mean(TOTAL.CATCH,na.rm=T))
        
        if(value=="Don't subdivide"){
          b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
@@ -277,7 +256,7 @@ server <- shinyServer(function(input, output,session) {
                  panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")
        }
        if(value=="Region"){
-         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
+         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
@@ -289,10 +268,10 @@ server <- shinyServer(function(input, output,session) {
      
      if(metric()=="NUM.FISH"){
        a=master %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
-         group_by(YEAR,FISHERY.TYPE,FISHERY) %>% summarise(newcol=n()) %>% distinct() %>% group_by(YEAR,FISHERY.TYPE)%>% summarise(newcol=n())
+         group_by(YEAR,FISHERY.TYPE) %>% summarise(newcol=n())
        
        aa=master %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
-         group_by(YEAR,FISHERY.TYPE,REGION,FISHERY) %>% summarise(newcol=n()) %>% distinct() %>% group_by(YEAR,FISHERY.TYPE,REGION)%>% summarise(newcol=n())
+         group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=n())
        
        if(value=="Don't subdivide"){
          b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
@@ -302,7 +281,7 @@ server <- shinyServer(function(input, output,session) {
                  panel.border = element_rect(colour = "black"))+ylab("Number of fisheries")+xlab("Year")
        }
        if(value=="Region"){
-         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
+         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
@@ -314,9 +293,6 @@ server <- shinyServer(function(input, output,session) {
      
      b
    })
-   # }, height = function() {
-   #   session$clientData$output_gear_ll_width
-   #   })
 
    
    output$rawTable<-DT::renderDataTable({
@@ -350,11 +326,10 @@ server <- shinyServer(function(input, output,session) {
         paste("National_Bycatch_Database", ".csv", sep = "")
       },
       content = function(file) {
-        write.csv(master_raw, file, row.names = FALSE)
+        write.csv(master, file, row.names = FALSE)
       })
 
   
 })
 
 shinyApp(ui = ui, server = server)
-
