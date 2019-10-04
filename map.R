@@ -50,14 +50,17 @@ p <- ggplot(master, aes(map_id = state)) +
   # annotate("rect",xmin = -78.5, xmax = -69.5, ymin = 39.3, ymax = 49.5, alpha = .15,color="black",size=.2,fill="lightgrey")+
   # annotate("rect",xmin = -78.5, xmax = -69.5, ymin = 39.3, ymax = 49.5, alpha = .15,color="black",size=.2,fill="lightgrey")
 p=p+  geom_scatterpie(aes(x=x,y=y,r = 4,),data=bycatch,cols=colnames(bycatch)[2:10],color=NA)+coord_fixed() +
-  theme(panel.background = element_blank())+ theme(panel.border = element_rect(colour = "black",fill=NA),legend.key.size = unit(.5,'lines'))+
+  theme(panel.background = element_blank())+ theme(panel.border = element_rect(colour = NA,fill=NA),legend.key.size = unit(.5,'lines'))+
   scale_fill_manual(breaks=c("combined gears","dredge","gillnet","line","longline","pots and traps","purse seine","trawl","troll"),
                     values=c("#8da38e","#9f7bb2","#7dac33","#c64f79","#93ccaf","#8e97ee","#3c4d63","grey","#4d543d","#59663e","#ffca33","#557e83","#c5703f","#4d304b","#69494f"))+
     guides(fill=guide_legend(title="Gear types"))+theme(legend.position=c(.18,.5),legend.justification = c(.9,.9))+theme(legend.text=element_text(size=6),legend.title = element_text(size=6))+
   annotate("text",x=-117.5,y=14,label="Alaska",size=2,color="#555555")+annotate("text",x=-68,y=31,label="Northeast",size=2,color="#555555")+
   annotate("text",x=-105,y=14,label="Pacific Islands",size=2,color="#555555")+annotate("text",x=-74,y=18,label="Southeast",size=2,color="#555555")+
-  annotate("text",x=-130,y=40,label="Westcoast",size=2,color="#555555")+
-  ggtitle("Percentage of fisheries in each gear type in the five bycatch reporting regions")+theme(plot.title = element_text(size=6))
+  annotate("text",x=-130,y=40,label="West Coast",size=2,color="#555555")+
+  theme(axis.title=element_blank(),
+        axis.text=element_blank(),
+        axis.ticks=element_blank())
+  #ggtitle("Percentage of fisheries in each gear type in the five bycatch reporting regions")+theme(plot.title = element_text(size=6))
 
 p
 

@@ -12,7 +12,6 @@ master_raw=read.csv("data/All_bycatch_data_2010_2015.csv") %>% select(-c(CV,FOOT
 master[master=="Pot"]<-"pot"
 master[master=="NW"]<-"WC"
 master[master=="SW"]<-"WC"
-master_extra_raw=read.csv("data/All_bycatch_data_2010_2015.csv")
 
 ### code to split mammals by year ####
 # a=master %>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL")
@@ -65,7 +64,7 @@ ui <- dashboardPage(skin = "black",
                                                #           "right", options = list(container = "body"))
                                                bsButton("q1", label = "", icon = icon("question"), style = "info", size = "extra-small"),
                                                bsPopover(id = "q1", title = "",
-                                                         content = "Unlike other taxonomic groups bycatch impacts of a fishery on marine mammals was only represented by MMPA weighting, therefore our default ranking doubled the weighting of the MMPA category relative to the other criteria. You can adjust the slider to see how changing the MMPA ranking weighting influences the final RBI of each fishery in each year.",
+                                                         content = "How should we explain MMPA and why we might adjust it?",
                                                          placement = "right", 
                                                          trigger = "hover", 
                                                          options = list(container = "body"))
@@ -86,15 +85,14 @@ ui <- dashboardPage(skin = "black",
                                                                      "Total catch"="TOTAL.CATCH",
                                                                      "Total landings"="TOTAL.FISHERY.LANDINGS",
                                                                      "Number of fisheries"="NUM.FISH"))),
-                              menuItem("Explore raw data", tabName='raw',icon=icon("database",lib='font-awesome')),
+                              menuItem("Explore raw data", tabName='raw',icon=icon("poo",lib='font-awesome')),
                               conditionalPanel("input.sidebarmenu ==='raw'",
                                                selectInput("raw_species","Filter species",species,width = "100%"),
                                                selectInput("raw_fishery","Filter fishery",fishery,width = "100%"),
                                                selectInput("raw_gear","Filter gear",gear,width = "100%"),
-                                               div(style="text-align:center",downloadButton("downloadDataF", label = h6(style="color:black","Download dataset"))),
-                                               div(style="text-align:center",downloadButton("downloadDataM", label = h6(style="color:black","Download metadata")))
-                              )#,
-                              # div(style="text-align:center",url <- a(tags$span(style="color:dodgerblue",h4("Read the paper")), href="https://media.giphy.com/media/qaoutfIYJYxr2/source.gif"))
+                                               div(style="text-align:center",downloadButton("downloadDataF", label = h6(style="color:black","Download dataset")))
+                              ),
+                              div(style="text-align:center",url <- a(tags$span(style="color:dodgerblue",h4("Read the paper")), href="https://media.giphy.com/media/qaoutfIYJYxr2/source.gif"))
                                )),
                     
    dashboardBody(
@@ -103,7 +101,7 @@ ui <- dashboardPage(skin = "black",
               fluidRow(
                 column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries."),width = 12),
                 column(h5(""),width=1,plotOutput("scale",height = '800px'),style = "background-color:white;"),
-                column(h5(""),width=8,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
+                column(h5(""),width=11,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
                        absolutePanel(draggable=T,top = 0, left = 0, right = 0,tags$div(h2(style="text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("EXPLORATORY"))))))
                 # absolutePanel(div(style="text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("placeholder"))),draggable=T,top=350, right=50)
                 # absolutePanel(draggable=T,top = 0, left = 0, right = 0,div(style="padding: 8px; border-bottom: 1px solid #CCC; background: #FFFFEE;",HTML(markdownToHTML(fragment.only=TRUE,text="placeholder"))))
@@ -289,14 +287,14 @@ server <- shinyServer(function(input, output,session) {
          group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=mean(FISHERY.BYCATCH.RATIO,na.rm=T)) 
 
      if(value=="Don't subdivide"){
-       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
+       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
          theme(panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
                panel.border = element_rect(colour = "black"))+ylab("Bycatch ratio")+xlab("Year")
      }
      if(value=="Region"){
-       b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
+       b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
          theme(panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
@@ -313,19 +311,19 @@ server <- shinyServer(function(input, output,session) {
          group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=sum(TOTAL.FISHERY.LANDINGS,na.rm=T))
        
        if(value=="Don't subdivide"){
-         b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
+         b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")
        }
        if(value=="Region"){
-         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
+         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")+
-           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"))
        }
      }
      
@@ -337,19 +335,19 @@ server <- shinyServer(function(input, output,session) {
          group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=sum(TOTAL.CATCH,na.rm=T))
        
        if(value=="Don't subdivide"){
-         b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
+         b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")
        }
        if(value=="Region"){
-         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
+         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")+
-           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"))
        }
   
      }
@@ -362,19 +360,19 @@ server <- shinyServer(function(input, output,session) {
          group_by(YEAR,FISHERY.TYPE,REGION,FISHERY) %>% summarise(newcol=n()) %>% distinct() %>% group_by(YEAR,FISHERY.TYPE,REGION)%>% summarise(newcol=n())
        
        if(value=="Don't subdivide"){
-         b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
+         b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Number of fisheries")+xlab("Year")
        }
        if(value=="Region"){
-         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
+         b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE)+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Number of fisheries")+xlab("Year")+
-           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"))
        }
        
      }
@@ -387,7 +385,7 @@ server <- shinyServer(function(input, output,session) {
 
    
    output$rawTable<-DT::renderDataTable({
-     a=master_extra_raw #%>% select(-c(TOTAL.FISHERY.BYCATCH.MM,TOTAL.FISHERY.BYCATCH.SBST,NUM.FISH,TOTAL.FISHERY.BYCATCH.FISH.INVERT,OBSERVER.COVERAGE,TOTAL.FISHERY.LANDINGS,TOTAL.CATCH))
+     a=master %>% select(-c(TOTAL.FISHERY.BYCATCH.MM,TOTAL.FISHERY.BYCATCH.SBST,NUM.FISH,TOTAL.FISHERY.BYCATCH.FISH.INVERT,OBSERVER.COVERAGE,TOTAL.FISHERY.LANDINGS,TOTAL.CATCH))
      fish=input$raw_fishery
      sp=input$raw_species
      # 
@@ -417,7 +415,7 @@ server <- shinyServer(function(input, output,session) {
 
    
    filtered_data=reactive({
-     a=master_extra_raw 
+     a=master %>% select(-c(TOTAL.FISHERY.BYCATCH.MM,TOTAL.FISHERY.BYCATCH.SBST,NUM.FISH,TOTAL.FISHERY.BYCATCH.FISH.INVERT,OBSERVER.COVERAGE,TOTAL.FISHERY.LANDINGS,TOTAL.CATCH))
      if(input$raw_species!="Don't filter"){
        a=a %>% filter(SCIENTIFIC.NAME==input$raw_species)
      }
@@ -438,12 +436,6 @@ server <- shinyServer(function(input, output,session) {
       content = function(file) {
         
         write.csv(filtered_data(), file, row.names = FALSE)
-      })
-    
-    output$downloadDataM <- downloadHandler(
-      filename = "US_Bycatch_analysis_Raw_data_metadata.pdf",
-      content = function(file) {
-        file.copy("data/US_Bycatch_analysis_Raw_data_metadata.pdf", file)
       })
 
   
