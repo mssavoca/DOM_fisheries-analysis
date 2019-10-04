@@ -12,8 +12,10 @@ library(ggpubr)
 # formula for standard error
 SE = function(x){sd(x)/sqrt(sum(!is.na(x)))}
 
+lbs.to.tonnes = function(x){x/2204.62}
+
 # fisheries summary data
-d1 <- read_csv("SummaryData_July2019_AnalysisExport_AllFisheryYears.csv")
+d1 <- read_csv("SummaryData_September2019_AnalysisExport_AllFisheryYears_MMPAweighted.csv")
 d1$Year <- as.factor(d1$Year)
 d1$Region <- as.factor(d1$Region)
 
@@ -21,42 +23,94 @@ d_raw_fish <- read_excel("Fish_master_data_frame_DOM_analysis_all_data.xlsx")
 d_raw_fish$YEAR <- as.factor(d_raw_fish$YEAR)
 d_raw_fish$REGION <- as.factor(d_raw_fish$REGION)
 
-d_raw_SBST <- read_excel("MM_SB_ST_master_data_frame2010_2015.xlsx")
+d_raw_SBST <- read_excel("MM_SB_ST_master_data_frame2010_2015.xlsx") %>% 
+  filter(REGION == "NE" & GROUP %in% c("sea turtle", "seabird")) %>% 
+  group_by(FISHERY, YEAR) %>% 
 
 # summary tables and statistics
 d_summ_full <- d_raw_fish %>% 
   filter(UNIT == "POUND") %>% 
-  group_by(FISHERY) %>% 
+  group_by(FISHERY, YEAR) %>% 
   summarize(num.fisheries = n_distinct(FISHERY),
-            total.fish.bycatch = sum(TOTAL.FISHERY.BYCATCH),
-            total.target.catch = sum(TOTAL.FISHERY.LANDINGS),
-            total.catch = sum(TOTAL.CATCH),
+            total.fish.bycatch = first(TOTAL.FISHERY.BYCATCH),
+            total.target.catch = first(TOTAL.FISHERY.LANDINGS),
+            total.catch = first(TOTAL.CATCH),
             total.BR = total.fish.bycatch/total.catch)
 
+d_sp_summ_full <- d_raw_fish %>% 
+  filter(UNIT == "POUND") %>% 
+  group_by(SCIENTIFIC.NAME) %>%
+  summarise(total.bycatch.lbs = sum(BYCATCH),
+            iucn.status = first(IUCN.STATUS),
+            esa.status = first(ESA.STATUS)) %>% 
+  separate(SCIENTIFIC.NAME, into = c("GENUS", "SPECIES", "SUBSPECIES"), sep = " ") %>% 
+ filter(GENUS %in% c("Alopias", "Alopiidae", "Cetorhinus", "Carcharodon", "Isurus", "Lamna", "Lamnidae", "Carcharhinus", "Carcharhinidae", "Mitsukurina", "Megachasma")) %>%  # for Lamniform sharks
+# filter(GENUS %in% c("Raja", "Rajidae", "Rajiformes", "Breviraja", "Dactylobatus", "Leucoraja", "Leucoraja", "Neoraja", "Rajella", "Rostroraja")) %>%  # for Rajid skates
+#  filter(GENUS %in% c("Platyrhinoidis", "Mobula", "Mobulidae", "Myliobatiformes", "Myliobatis", "Manta", "Dasyatidae", "Dasyatis", "Urobatis", "Rostroraja")) %>%  # for Myliobatiform rays
+  arrange(-total.bycatch.lbs)
+
+
+
+
+
+
 d_summ_SBST <- d_raw_SBST %>% 
-  filter(GROUP %in% c("sea turtle", "seabird")) %>% 
-  group_by(FISHERY, GROUP, YEAR) %>% 
+  filter(GROUP %in% c("sea turtle", "seabird") & YEAR %in% c("2014","2015")) %>% 
+  group_by(FISHERY, GROUP) %>% 
   summarize(total.SBST.bycatch = sum(BYCATCH))
 
 
 d_summ_summ <- d1 %>% 
-  filter(TotalBycatch_lbs !="NA") %>% 
-  group_by(Region) %>% 
+#  filter(TotalBycatch_lbs !="NA") %>% 
+  group_by(Fishery, Region) %>% 
   summarize(num.fisheries = n_distinct(Fishery),
-            total.SBST.bycatch = sum(TotalBycatch_inds),
-            total.fish.bycatch = sum(TotalBycatch_lbs),
+            total.SBST.bycatch = sum(TotalBycatch_inds, na.rm = TRUE),
+            total.fish.bycatch = sum(TotalBycatch_lbs, na.rm = TRUE),
             bycatch.ratio = Bycatch_ratio,
             total.fish.catch = TotalBycatch_lbs/Bycatch_ratio,
             total.target.catch = total.fish.catch-total.fish.bycatch)
 
+sum(d_summ_summ$total.target.catch, na.rm = TRUE) # to get total target catch
+sum(d_summ_summ$total.fish.bycatch, na.rm = TRUE) # to get total bycatch
+sum(d_summ_summ$total.fish.catch, na.rm = TRUE) # to get total bycatch
 
-a=d1 %>% group_by(Fishery) %>% select(GearType_general, GearType_specific, MMPA, Year)
+a=d1 %>% group_by(Fishery, Region) %>% summarise(meanSBST = mean(TotalBycatch_inds)) %>% 
+  arrange(-meanSBST)
 
 d_crit_summ <- d1 %>% 
-  #filter(GearType_general == "trawl") %>% 
+  #filter(Region == "NE" & Year %in% c("2010", "2011","2012","2013")) %>% 
+  #filter(GearType_specific %in% c("large-mesh otter trawl", "small-mesh otter trawl")) %>% 
   group_by(Fishery) %>% 
-  summarise(avg.score = mean(mean_criteria),
+  summarise(median.score = median(mean_criteria),
             SE.score = SE(mean_criteria))
+
+b <- d1 %>% 
+  filter(Year %in% c("2010","2011", "2012", "2013", "2014")) %>% 
+  group_by(Year) %>% 
+  summarise(tot_by = mean(TotalBycatch_lbs))
+
+
+## CHANGE 0s to NAs for SBST metrics in:
+# New England Closed-Area Mid-Water Otter Trawl, 
+# Mid-Atlantic Twin Trawl, 
+# New England Closed-Area Mid-Water Otter Trawl, 
+# New England General Category Closed Area Scallop Dredge,
+# New England General Category Open Area Scallop Dredge,
+# New England Large-Mesh Gillnet, 
+# New England Large-Mesh Haddock Separator Otter Trawl,
+# New England Large-Mesh Otter Trawl, 
+# New England Large-Mesh Ruhle Otter Trawl,
+# New England Limited Access Closed Area Scallop Dredge,
+# New England Limited Access Open Area Scallop Dredge,
+# New England Mid-Water Otter Trawl,
+# New England Open-Area Mid-Water Otter Trawl,
+# New England Small-Mesh Haddock Separator Otter Trawl,
+# New England Small-Mesh Otter Trawl,
+# New England Small-Mesh Ruhle Otter Trawl
+
+
+
+
 
 # log transform response to get normal distribution for frequentist stats, or do MCMCglmm
 
@@ -213,9 +267,12 @@ mean_score_hist <- ggplot(d1, aes(mean_criteria)) +
   #          label = c("better performing", "worse performing")) +
   #geom_density(alpha=.2, fill="#FF6666") +
   #facet_wrap(.~GearType_general) +
-  geom_vline(xintercept = c(0.07810263, 0.14722190), color = "blue", linetype = "dashed") +
-  theme_classic()
+  geom_vline(xintercept = c(0.08032846, 0.15452661), color = "blue", linetype = "dashed") +
+  theme_classic(base_size = 16)
 mean_score_hist 
+
+col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" ,"#F7F7F7", "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F","#67001F"))
+col.pal.2 <- col.pal(2)
 
 
 #density plot by gear type
@@ -229,9 +286,11 @@ dens_by_GT <- ggplot(d1, aes(mean_criteria, fct_reorder(GearType_general, mean_c
   ylab("Gear Type") +
   # annotate("text", x = c(0.05, 0.3), y= 0.65, 
   #          label = c("better performing", "worse performing")) +
-  scale_fill_viridis(name = "mean_criteria", option = "B") +
+  scale_fill_gradientn(colours = c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F","#67001F"), 
+                       name = NULL, limits = c(-0.1, 0.5)) +
+  #scale_fill_viridis(name = "mean_criteria", option = "B") +
   xlab("RBI") +
-  theme_classic()
+  theme_classic(base_size = 16)
 dens_by_GT
 
 #density plot by region
@@ -247,11 +306,14 @@ dens_by_region <- ggplot(d1, aes(mean_criteria, fct_reorder(Region, mean_criteri
   ylab("Region") +
   # annotate("text", x = c(0.05, 0.3), y= 0.65,
   #          label = c("better performing", "worse performing")) +
-  scale_fill_viridis(name = "mean_criteria", option = "B") +
+  scale_fill_gradientn(colours = c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F","#67001F"), 
+                       name = NULL, limits = c(-0.1, 0.5)) +
+  # scale_fill_viridis(name = "mean_criteria", option = "B") +
   xlab("RBI") +
-  theme_classic()
+  theme_classic(base_size = 16)
 dens_by_region + guides(size = FALSE)
 
+col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" ,"#F7F7F7", "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F","#67001F","#67001F"))
 
 #density plot by year
 dens_by_year <- ggplot(d1, aes(mean_criteria, fct_relevel(Year, "2015", "2014", "2013", "2012", "2011", "2010"), 
@@ -264,19 +326,33 @@ dens_by_year <- ggplot(d1, aes(mean_criteria, fct_relevel(Year, "2015", "2014", 
   ylab("Year") +
   # annotate("text", x = c(0.05, 0.3), y= 0.65, 
   #          label = c("better performing", "worse performing")) +
-  scale_fill_viridis(name = "mean_criteria", option = "B") +
+  scale_fill_gradientn(colours = c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F","#67001F"), 
+                       name = NULL, limits = c(-0.1, 0.5)) +
+  #scale_fill_viridis(name = "mean_criteria", option = "B") +
+  scale_colour_brewer(palette = "RdBu",2) +
   xlab("RBI") +
-  theme_classic()
+  theme_classic(base_size = 16)
 dens_by_year
 
+# old:     
+#   "#053061" ,"#053061" ,"#053061",
+# "#2166AC", "#4393C3", "#F7F7F7", "#FDDBC7", "#F4A582" ,"#D6604D","#B2182B","#B2182B",
+# "#67001F","#67001F","#67001F","#67001F","#67001F","#67001F","#67001F"
+# new: "#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"
 
 
 #combine plots into one mega figure
-ggarrange(mean_score_hist,                                        # First row with scatter plot
+Figure_3 <- ggarrange(mean_score_hist,                                        # First row with scatter plot
           ggarrange(dens_by_GT, dens_by_region, dens_by_year, 
                     ncol = 3, labels = c("B", "C", "D")), # Second row with box and dot plots
                       nrow = 2, labels = "A" )                    # Labels of the scatter plot
+Figure_3
 
+ggsave("Figure_3.tiff", width = 11, height = 12, units = "in")
+ggsave("Figure_3.eps", width = 11, height = 12, units = "in")
+ggsave("Figure_3.jpg", width = 11, height = 12, units = "in")
+dev.copy2pdf(file="Figure_3.pdf", width=11, height=12)
 
 hist_BR <- ggplot(d1, aes(mean_criteria)) +
   geom_histogram(binwidth = 0.05, color="black", fill="gray80")
+
