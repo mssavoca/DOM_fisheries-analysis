@@ -329,7 +329,6 @@ dens_by_year <- ggplot(d1, aes(mean_criteria, fct_relevel(Year, "2015", "2014", 
   scale_fill_gradientn(colours = c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F","#67001F"), 
                        name = NULL, limits = c(-0.1, 0.5)) +
   #scale_fill_viridis(name = "mean_criteria", option = "B") +
-  scale_colour_brewer(palette = "RdBu",2) +
   xlab("RBI") +
   theme_classic(base_size = 16)
 dens_by_year
