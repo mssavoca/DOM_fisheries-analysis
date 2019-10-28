@@ -101,7 +101,7 @@ ui <- dashboardPage(skin = "black",
      tabItems(
        tabItem(tabName = "rbi",
               fluidRow(
-                column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries."),width = 12),
+                column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
                 column(h5(""),width=1,plotOutput("scale",height = '800px'),style = "background-color:white;"),
                 column(h5(""),width=8,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
                        absolutePanel(draggable=T,top = 0, left = 0, right = 0,tags$div(h2(style="text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("EXPLORATORY"))))))
@@ -111,19 +111,19 @@ ui <- dashboardPage(skin = "black",
               )),
        tabItem(tabName = "species",
         fluidRow(
-            column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries."),width = 12),
+            column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
              column(h5("Fish and invertebrates"),width=4,plotOutput("Fish")),
              column(h5("Mammals"),width=4,plotOutput("Mammals")),
              column(h5("Seabirds and sea turtles"),width=4,plotOutput("SBST"))
         )),
        tabItem(tabName = "fishing",
                fluidRow(
-                 column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries."),width = 12),
+                 column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
                  column(h5(""),width=12,plotOutput("gear_ll",height = '800px')))
                ),
        tabItem(tabName = "raw",
                fluidRow(
-                 column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries."),width = 12),
+                 column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
                  column(h5(""),width=12,DT::dataTableOutput("rawTable"))
                ))
      ))
@@ -186,7 +186,7 @@ server <- shinyServer(function(input, output,session) {
               panel.grid.minor = element_blank(),
               strip.background = element_blank(),
               panel.border = element_rect(colour = "black"))+ylab("Total bycatch (lbs)")+xlab("Year")+
-        scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+        scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
       }
     if(value=="Gear type"){
       a=master %>% filter(GROUP=="invertebrate"|GROUP=="fish") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% filter(UNIT=="POUND") %>% 
@@ -221,7 +221,7 @@ server <- shinyServer(function(input, output,session) {
              panel.grid.minor = element_blank(),
              strip.background = element_blank(),
              panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")+
-         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
      }
      if(value=="Gear type"){
        a=mammals %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
@@ -256,7 +256,7 @@ server <- shinyServer(function(input, output,session) {
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
                panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")+
-         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
      }
      if(value=="Gear type"){
        a=master %>% filter(GROUP=="seabird"|GROUP=="sea turtle") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015)%>% filter(UNIT=="INDIVIDUAL") %>% 
@@ -301,7 +301,7 @@ server <- shinyServer(function(input, output,session) {
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
                panel.border = element_rect(colour = "black"))+ylab("Bycatch ratio")+xlab("Year")+
-         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
      }
      }
      
@@ -325,7 +325,7 @@ server <- shinyServer(function(input, output,session) {
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")+
-           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
        }
      }
      
@@ -349,7 +349,7 @@ server <- shinyServer(function(input, output,session) {
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")+
-           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
        }
   
      }
@@ -374,7 +374,7 @@ server <- shinyServer(function(input, output,session) {
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
                  panel.border = element_rect(colour = "black"))+ylab("Number of fisheries")+xlab("Year")+
-           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("Alaska","Pacific Islands","Southeast","Westcoast","Northeast"))
+           scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
        }
        
      }
