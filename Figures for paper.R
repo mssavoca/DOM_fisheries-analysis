@@ -23,6 +23,17 @@ d_raw_fish <- read_excel("Fish_master_data_frame_DOM_analysis_all_data.xlsx")
 d_raw_fish$YEAR <- as.factor(d_raw_fish$YEAR)
 d_raw_fish$REGION <- as.factor(d_raw_fish$REGION)
 
+# CV info for Steph
+CV_for_Steph <- d_raw_fish %>% 
+  filter(YEAR %in% c("2010","2011","2012","2013","2014","2015")) %>%  
+  select(FISHERY, YEAR, CV) %>% 
+  mutate(CV = as.numeric(CV)) %>% 
+  group_by(FISHERY, YEAR) %>% 
+  summarize(mean_CV = mean(CV, na.rm = TRUE),
+            median_CV = median(CV, na.rm = TRUE),
+            max_CV = max(CV, na.rm = TRUE))
+write_csv(CV_for_Steph, "CV_for_Steph.csv")
+
 d_raw_SBST <- read_excel("MM_SB_ST_master_data_frame2010_2015.xlsx") %>% 
   filter(REGION == "NE" & GROUP %in% c("sea turtle", "seabird")) %>% 
   group_by(FISHERY, YEAR) %>% 
