@@ -7,21 +7,12 @@ library(d3heatmap)
 library(fields)
 library(shinyBS)
 library(markdown)
-library(scales)
 master=read.csv("data/All_bycatch_data_2010_2015.csv") %>% select(-c(CV,FOOTNOTE.S.,FISHERY.TYPE.GENERAL,FISHERY.TYPE.SPECIFIC)) %>% .[complete.cases(.[,c(6,9,10)]),] %>% mutate(NUM.FISH=rep(1,nrow(.)))
-# master_raw=read.csv("data/All_bycatch_data_2010_2015.csv") %>% select(-c(CV,FOOTNOTE.S.,FISHERY.TYPE.GENERAL,FISHERY.TYPE.SPECIFIC)) %>% .[complete.cases(.[,c(6,9,10)]),] %>% mutate(NUM.FISH=rep(1,nrow(.)))
+master_raw=read.csv("data/All_bycatch_data_2010_2015.csv") %>% select(-c(CV,FOOTNOTE.S.,FISHERY.TYPE.GENERAL,FISHERY.TYPE.SPECIFIC)) %>% .[complete.cases(.[,c(6,9,10)]),] %>% mutate(NUM.FISH=rep(1,nrow(.)))
 master[master=="Pot"]<-"pot"
 master[master=="NW"]<-"WC"
 master[master=="SW"]<-"WC"
-
-# cleaning for resubmission
-master[master=="combined gears"]<-"longline gears"
-master=master %>% mutate(FISHERY=gsub("West Coast Mid-Water Trawl for Whiting","West Coast Mid-Water Trawl for Hake",FISHERY)) %>% mutate(FISHERY=gsub("Oregon/California Pink Shrimp","Washington/Oregon/California Pink Shrimp",FISHERY))
-
-# cleaning for resubmission
 master_extra_raw=read.csv("data/All_bycatch_data_2010_2015.csv")
-master_extra_raw[master_extra_raw=="combined gears"]<-"longline gears"
-master_extra_raw=master_extra_raw %>% mutate(FISHERY=gsub("West Coast Mid-Water Trawl for Whiting","West Coast Mid-Water Trawl for Hake",FISHERY)) %>% mutate(FISHERY=gsub("Oregon/California Pink Shrimp","Washington/Oregon/California Pink Shrimp",FISHERY))
 
 ### code to split mammals by year ####
 # a=master %>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL")
@@ -47,7 +38,7 @@ master_extra_raw=master_extra_raw %>% mutate(FISHERY=gsub("West Coast Mid-Water 
 # write.csv(final,"data/mammals_by_year.csv",row.names = F)
 #####
 mammals=read.csv("data/mammals_by_year.csv")
-rbi=read.csv("data/SummaryData_November2019_AnalysisExport_AllFisheryYears.csv")
+rbi=read.csv("data/cleaned_stephs_code_1.csv")
 
 group=unique(master$GROUP)%>% .[complete.cases(.)]
 year=c(2010,2011,2012,2013,2014,2015)
@@ -65,47 +56,36 @@ ui <- dashboardPage(skin = "black",
                      titleWidth = 350
                     ),
                     dashboardSidebar(
-                      width = 280,
+                      width = 200,
                   sidebarMenu(id = 'sidebarmenu',
+                              menuItem("Relative Bycatch Index",tabName = 'rbi',icon=icon("award")),
+                              conditionalPanel("input.sidebarmenu==='rbi'",
+                                               sliderInput("mmpa","Adjust MMPA weighting",min=1,max=5,step=1,value=2),
+                                               # shinyBS::bsTooltip("mmpa", "The wait times will be broken into this many equally spaced bins",
+                                               #           "right", options = list(container = "body"))
+                                               bsButton("q1", label = "", icon = icon("question"), style = "info", size = "extra-small"),
+                                               bsPopover(id = "q1", title = "",
+                                                         content = "Unlike other taxonomic groups bycatch impacts of a fishery on marine mammals was only represented by MMPA weighting, therefore our default ranking doubled the weighting of the MMPA category relative to the other criteria. You can adjust the slider to see how changing the MMPA ranking weighting influences the final RBI of each fishery in each year.",
+                                                         placement = "right", 
+                                                         trigger = "hover", 
+                                                         options = list(container = "body"))
+                                               
+                                               ),
                               menuItem("Visualize by species group", tabName='species',icon=icon("fish")),
                               conditionalPanel("input.sidebarmenu ==='species'",
                                                #checkboxInput("sp_region", "Subdivide by region",value=FALSE),
                                                radioButtons(inputId="choice_sp", label="How would you like to subdivide the data?", selected = "Don't subdivide",
                                                             choices=c("Region","Gear type", "Don't subdivide"))),
-                              #checkboxInput("sp_region", "Subdivide by fishing type",value=FALSE)),
-                              menuItem("Visualize by gear type", tabName='fishing',icon=icon("ship",lib='font-awesome')),
+                                               #checkboxInput("sp_region", "Subdivide by fishing type",value=FALSE)),
+                               menuItem("Visualize by gear type", tabName='fishing',icon=icon("ship",lib='font-awesome')),
                               conditionalPanel("input.sidebarmenu ==='fishing'",
-                                               checkboxInput("Free_y", "Fixed y axis scale",value=T),
                                                radioButtons(inputId="choice_gear", label="How would you like to subdivide the data?", selected = "Don't subdivide",
                                                             choices=c("Region", "Don't subdivide")),
                                                radioButtons(inputId="choice_metric", label="What metric would you like to see?", selected = "FISHERY.BYCATCH.RATIO",
-                                                            choices=c("Bycatch ratio"="FISHERY.BYCATCH.RATIO",
-                                                                      "Total catch"="TOTAL.CATCH",
-                                                                      "Total landings"="TOTAL.FISHERY.LANDINGS",
-                                                                      "Number of fisheries"="NUM.FISH"))),
-                              menuItem("Relative Bycatch Index",tabName = 'rbi',icon=icon("award")),
-                              conditionalPanel("input.sidebarmenu==='rbi'",
-                                               bsButton("q1", label = "", icon = icon("question"), style = "info", size = "extra-small"),
-                                               bsPopover(id = "q1", title = "",
-                                                         content = "Unlike other taxonomic groups bycatch impacts of a fishery on marine mammals was only represented by MMPA weighting, therefore our default ranking doubled the weighting of the MMPA category relative to the other criteria. You can adjust the slider to see how changing the criteria weightings influences the final RBI of each fishery in each year.",
-                                                         placement = "right", 
-                                                         trigger = "hover", 
-                                                         options = list(container = "body")),
-                                               sliderInput("mmpa","Adjust MMPA weighting",min=1,max=5,step=1,value=2),
-                                               # shinyBS::bsTooltip("mmpa", "The wait times will be broken into this many equally spaced bins",
-                                               #           "right", options = list(container = "body"))
-                                               sliderInput("TB_lbs","Adjust Total Bycatch (lbs) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("TB_indv","Adjust Total Bycatch (indv) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("BR","Adjust Bycatch Ratio weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("ESA_n","Adjust ESA (#) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("ESA_lbs","Adjust ESA (lbs) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("ESA_bt","Adjust ESA (birds and turtles) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("IUCN_n","Adjust IUCN (#) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("IUCN_lbs","Adjust IUCN (lbs) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("IUCN_bt","Adjust IUCN (bids and turtles) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("Tier","Adjust Tier weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("CV","Adjust CV weighting",min=1,max=5,step=1,value=1)
-                                               ),
+                                                           choices=c("Bycatch ratio"="FISHERY.BYCATCH.RATIO",
+                                                                     "Total catch"="TOTAL.CATCH",
+                                                                     "Total landings"="TOTAL.FISHERY.LANDINGS",
+                                                                     "Number of fisheries"="NUM.FISH"))),
                               menuItem("Explore raw data", tabName='raw',icon=icon("database",lib='font-awesome')),
                               conditionalPanel("input.sidebarmenu ==='raw'",
                                                selectInput("raw_species","Filter species",species,width = "100%"),
@@ -123,10 +103,8 @@ ui <- dashboardPage(skin = "black",
               fluidRow(
                 column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
                 column(h5(""),width=1,plotOutput("scale",height = '800px'),style = "background-color:white;"),
-                column(h5("Relative Bycatch Index"),width=5,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
-                       absolutePanel(draggable=T,top = 0, left = 0, right = 0,tags$div(h2(style="background-color:white;text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("EXPLORATORY ONLY. Output does not necessarily align with results in Savoca et al.")))))),
-                column(h5(""),width=1,plotOutput("scale_SD",height = '800px'),style = "background-color:white;"),
-                column(h5("Inter-criteria standard deviation"),width=5,d3heatmapOutput("heatmap_SD",height = '800px'),style = "background-color:white;")
+                column(h5(""),width=8,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
+                       absolutePanel(draggable=T,top = 0, left = 0, right = 0,tags$div(h2(style="text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("EXPLORATORY"))))))
                 # absolutePanel(div(style="text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("placeholder"))),draggable=T,top=350, right=50)
                 # absolutePanel(draggable=T,top = 0, left = 0, right = 0,div(style="padding: 8px; border-bottom: 1px solid #CCC; background: #FFFFEE;",HTML(markdownToHTML(fragment.only=TRUE,text="placeholder"))))
                 
@@ -158,13 +136,11 @@ ui <- dashboardPage(skin = "black",
 server <- shinyServer(function(input, output,session) {
   
   output$heatmap<-renderD3heatmap({
-    a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
-    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))#Here 'w' refers to the weights.
-   # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
+    a=rbi %>% mutate(mean_criteria = apply(.[,26:37],1,function(x) weighted.mean(x,w=c(rep(1,11),input$mmpa),na.rm=T))) #Here 'w' refers to the weights.
     
-    q=a %>% select(Year,mean_criteria,Fishery) %>% spread(Year,mean_criteria) %>% mutate(Fishery=as.character(Fishery)) %>% arrange(desc(Fishery))
-    rownames(q)=q$Fishery
-    q=q %>% .[,2:ncol(.)] 
+    q=a %>% select(Year,mean_criteria,Fishery_ShortName) %>% spread(Year,mean_criteria) %>% mutate(Fishery_ShortName=as.character(Fishery_ShortName)) %>% arrange(desc(Fishery_ShortName))
+    rownames(q)=q$Fishery_ShortName
+    q=q %>% .[,2:ncol(.)]
     
     d3heatmap(q, na.rm=T,Rowv = FALSE, Colv=FALSE, colors=c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"),
               xlab=w,
@@ -173,38 +149,9 @@ server <- shinyServer(function(input, output,session) {
     )
   })
   
-  output$scale_SD<-renderPlot({
-    # par(mar=c(1,.1,.1,.1))
-    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))
-    col.pal <- colorRampPalette(c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF"))
-    ncolors <- 100
-    breaks <- seq(min(rbi$criteria_sd,na.rm = T),max(.92,na.rm = T),,ncolors+1)
-    levs <- breaks[-1] - diff(breaks)/2
-    # image(x=levs, y=1, z=as.matrix(levs), col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n")
-    par(mar=c(.1,.1,.1,.1))
-    image.plot(x=levs, y=1,smallplot= c(0,.2,.2,1), z=as.matrix(levs), legend.only = TRUE,col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n",axis.args = list(cex.axis = .6))
-    
-  })
-  
-  output$heatmap_SD<-renderD3heatmap({
-    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
-    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))#Here 'w' refers to the weights.
-    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
-    
-    q=rbi %>% select(Year,criteria_sd,Fishery) %>% spread(Year,criteria_sd) %>% mutate(Fishery=as.character(Fishery)) %>% arrange(desc(Fishery))
-    rownames(q)=q$Fishery
-    q=q %>% .[,2:ncol(.)] 
-    
-    d3heatmap(q, na.rm=T,Rowv = FALSE, Colv=FALSE, colors=c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF"),
-              xlab=w,
-              show_grid=F, yaxis_width=400,show_color_legend=T,na_color="white",row_side_palette=c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF")
-              
-    )
-  })
-  
   output$scale<-renderPlot({
     # par(mar=c(1,.1,.1,.1))
-    a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))
+    a=rbi %>% mutate(mean_criteria = apply(.[,26:37],1,function(x) weighted.mean(x,w=c(rep(1,11),input$mmpa),na.rm=T))) #Here 'w' refers to the weights.
     col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
     ncolors <- 100
     breaks <- seq(min(a$mean_criteria,na.rm = T),max(a$mean_criteria,na.rm = T),,ncolors+1)
@@ -224,13 +171,12 @@ server <- shinyServer(function(input, output,session) {
     
     if(value=="Don't subdivide"){
       a=master %>% filter(GROUP=="invertebrate"|GROUP=="fish") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% filter(UNIT=="POUND") %>% 
-        group_by(YEAR,FISHERY) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.FISH.INVERT)) %>% group_by(YEAR) %>% summarise(newcol=sum(newcol)) 
+        group_by(YEAR,FISHERY) %>% summarise(newcol=mean(TOTAL.FISHERY.BYCATCH.FISH.INVERT)) %>% group_by(YEAR) %>% summarise(newcol=sum(newcol))
       b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+ theme_bw()+
         theme(panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               strip.background = element_blank(),
-              panel.border = element_rect(colour = "black"))+ylab("Total bycatch (lbs)")+xlab("Year")+ scale_y_continuous(labels = comma)
-      b
+              panel.border = element_rect(colour = "black"))+ylab("Total bycatch (lbs)")+xlab("Year")
       }
     if(value=="Region"){
       a=master %>% filter(GROUP=="invertebrate"|GROUP=="fish") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% filter(UNIT=="POUND") %>% 
@@ -240,7 +186,7 @@ server <- shinyServer(function(input, output,session) {
               panel.grid.minor = element_blank(),
               strip.background = element_blank(),
               panel.border = element_rect(colour = "black"))+ylab("Total bycatch (lbs)")+xlab("Year")+
-        scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))+ scale_y_continuous(labels = comma)
+        scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
       }
     if(value=="Gear type"){
       a=master %>% filter(GROUP=="invertebrate"|GROUP=="fish") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% filter(UNIT=="POUND") %>% 
@@ -250,7 +196,7 @@ server <- shinyServer(function(input, output,session) {
               panel.grid.minor = element_blank(),
               strip.background = element_blank(),
               panel.border = element_rect(colour = "black"))+ylab("Total bycatch (lbs)")+xlab("Year")+
-              scale_fill_manual("",values=c("jig"="#9f7bb2","dredge"="#7dac33","gillnet"="#c64f79","line"="#93ccaf","longline"="#8e97ee","pot"="#59663e","seine"="#ffca33","trawl"="#c5703f","troll"="#4d304b"))+ scale_y_continuous(labels = comma)
+              scale_fill_manual("",values=c("jig"="#9f7bb2","dredge"="#7dac33","gillnet"="#c64f79","line"="#93ccaf","longline"="#8e97ee","pot"="#59663e","seine"="#ffca33","trawl"="#c5703f","troll"="#4d304b"))
     }
     b
    })
@@ -265,7 +211,7 @@ server <- shinyServer(function(input, output,session) {
        theme(panel.grid.major = element_blank(),
              panel.grid.minor = element_blank(),
              strip.background = element_blank(),
-             panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")+ scale_y_continuous(labels = comma)
+             panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")
      }
      if(value=="Region"){
        a=mammals %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
@@ -275,7 +221,7 @@ server <- shinyServer(function(input, output,session) {
              panel.grid.minor = element_blank(),
              strip.background = element_blank(),
              panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")+
-         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))+ scale_y_continuous(labels = comma)
+         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
      }
      if(value=="Gear type"){
        a=mammals %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015) %>% 
@@ -285,7 +231,7 @@ server <- shinyServer(function(input, output,session) {
              panel.grid.minor = element_blank(),
              strip.background = element_blank(),
              panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")+
-         scale_fill_manual("",values=c("jig"="#9f7bb2","dredge"="#7dac33","gillnet"="#c64f79","line"="#93ccaf","longline"="#8e97ee","pot"="#59663e","seine"="#ffca33","trawl"="#c5703f","troll"="#4d304b"))+ scale_y_continuous(labels = comma)
+         scale_fill_manual("",values=c("jig"="#9f7bb2","dredge"="#7dac33","gillnet"="#c64f79","line"="#93ccaf","longline"="#8e97ee","pot"="#59663e","seine"="#ffca33","trawl"="#c5703f","troll"="#4d304b"))
      }
      b
    })
@@ -300,7 +246,7 @@ server <- shinyServer(function(input, output,session) {
          theme(panel.grid.major = element_blank(),
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
-               panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")+ scale_y_continuous(labels = comma)
+               panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")
      }
      if(value=="Region"){
        a=master %>% filter(GROUP=="seabird"|GROUP=="sea turtle") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015)%>% filter(UNIT=="INDIVIDUAL") %>% 
@@ -310,7 +256,7 @@ server <- shinyServer(function(input, output,session) {
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
                panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")+
-         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))+ scale_y_continuous(labels = comma)
+         scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
      }
      if(value=="Gear type"){
        a=master %>% filter(GROUP=="seabird"|GROUP=="sea turtle") %>% filter(YEAR==2010|YEAR==2011|YEAR==2012|YEAR==2013|YEAR==2014|YEAR==2015)%>% filter(UNIT=="INDIVIDUAL") %>% 
@@ -320,7 +266,7 @@ server <- shinyServer(function(input, output,session) {
                panel.grid.minor = element_blank(),
                strip.background = element_blank(),
                panel.border = element_rect(colour = "black"))+ylab("Total bycatch (individuals)")+xlab("Year")+
-         scale_fill_manual("",values=c("jig"="#9f7bb2","dredge"="#7dac33","gillnet"="#c64f79","line"="#93ccaf","longline"="#8e97ee","pot"="#59663e","seine"="#ffca33","trawl"="#c5703f","troll"="#4d304b"))+ scale_y_continuous(labels = comma)
+         scale_fill_manual("",values=c("jig"="#9f7bb2","dredge"="#7dac33","gillnet"="#c64f79","line"="#93ccaf","longline"="#8e97ee","pot"="#59663e","seine"="#ffca33","trawl"="#c5703f","troll"="#4d304b"))
      }
      b
    })
@@ -367,7 +313,6 @@ server <- shinyServer(function(input, output,session) {
          group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=sum(TOTAL.FISHERY.LANDINGS,na.rm=T))
        
        if(value=="Don't subdivide"){
-         options(scipen=10000)
          b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
@@ -375,7 +320,6 @@ server <- shinyServer(function(input, output,session) {
                  panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")
        }
        if(value=="Region"){
-         options(scipen=10000)
          b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
@@ -393,7 +337,6 @@ server <- shinyServer(function(input, output,session) {
          group_by(YEAR,FISHERY.TYPE,REGION) %>% summarise(newcol=sum(TOTAL.CATCH,na.rm=T))
        
        if(value=="Don't subdivide"){
-         options(scipen=10000)
          b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
@@ -401,7 +344,6 @@ server <- shinyServer(function(input, output,session) {
                  panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")
        }
        if(value=="Region"){
-         options(scipen=10000)
          b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
@@ -420,7 +362,6 @@ server <- shinyServer(function(input, output,session) {
          group_by(YEAR,FISHERY.TYPE,REGION,FISHERY) %>% summarise(newcol=n()) %>% distinct() %>% group_by(YEAR,FISHERY.TYPE,REGION)%>% summarise(newcol=n())
        
        if(value=="Don't subdivide"){
-         options(scipen=10000)
          b=ggplot(a) +geom_bar(aes(x=YEAR,y=newcol),stat="identity")+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
@@ -428,7 +369,6 @@ server <- shinyServer(function(input, output,session) {
                  panel.border = element_rect(colour = "black"))+ylab("Number of fisheries")+xlab("Year")
        }
        if(value=="Region"){
-         options(scipen=10000)
          b=ggplot(aa) +geom_bar(aes(x=YEAR,y=newcol,fill=REGION),stat="identity", position = position_dodge())+facet_wrap(~FISHERY.TYPE,scales = "free_y")+ theme_bw() +
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
@@ -438,9 +378,7 @@ server <- shinyServer(function(input, output,session) {
        }
        
      }
-     if(input$Free_y==F){
-       b=b+facet_wrap(~FISHERY.TYPE,scales = "fixed")
-     }
+     
      b
    })
    # }, height = function() {
