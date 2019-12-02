@@ -125,8 +125,8 @@ ui <- dashboardPage(skin = "black",
               fluidRow(
                 column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
                 column(h5(""),width=1,plotOutput("scale",height = '800px'),style = "background-color:white;"),
-                column(h5(""),width=5,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
-                       absolutePanel(draggable=T,top = 0, left = 0, right = 0,tags$div(h2(style="background-color:white;text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("EXPLORATORY ONLY. Output does not necessarily align with results in Savoca et al.")))))),
+                column(h5(""),width=10,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
+                       absolutePanel(draggable=F,top = 300, left = 0, right = 0,tags$div(h2(style="background-color:white;opacity:0.6;text-align:center;color:red;padding:0px;border-radius: 0px;transform: rotate(45deg); ",tags$b(tags$em("EXPLORATORY ONLY. Output does not necessarily align with results in Savoca et al.")))))),
                 # column(h5(""),width=1,plotOutput("scale_SD",height = '800px'),style = "background-color:white;"),
                 # column(h5("Inter-criteria variance"),width=5,d3heatmapOutput("heatmap_SD",height = '800px'),style = "background-color:white;"),
                 column(h6(style="font-style: italic;","App developed by Heather Welch (UCSC/NOAA)"),width = 12)
