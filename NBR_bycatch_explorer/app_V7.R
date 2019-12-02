@@ -91,8 +91,6 @@ ui <- dashboardPage(skin = "black",
                                                          placement = "right", 
                                                          trigger = "hover", 
                                                          options = list(container = "body")),
-                                               radioButtons("display","Select display metric",choices = list("Relative Bycatch Index","Inter-criteria variance"),width = "100%",selected = "Inter-criteria variance"),
-                                               conditionalPanel("input.display ==='Relative Bycatch Index'",
                                                sliderInput("mmpa","Adjust MMPA weighting",min=1,max=5,step=1,value=2),
                                                # shinyBS::bsTooltip("mmpa", "The wait times will be broken into this many equally spaced bins",
                                                #           "right", options = list(container = "body"))
@@ -107,7 +105,7 @@ ui <- dashboardPage(skin = "black",
                                                sliderInput("IUCN_bt","Adjust IUCN (bids and turtles) weighting",min=1,max=5,step=1,value=1),
                                                sliderInput("Tier","Adjust Tier weighting",min=1,max=5,step=1,value=1),
                                                sliderInput("CV","Adjust CV weighting",min=1,max=5,step=1,value=1)
-                                               )),
+                                               ),
                               menuItem("Explore raw data", tabName='raw',icon=icon("database",lib='font-awesome')),
                               conditionalPanel("input.sidebarmenu ==='raw'",
                                                selectInput("raw_species","Filter species",species,width = "100%"),
@@ -125,11 +123,10 @@ ui <- dashboardPage(skin = "black",
               fluidRow(
                 column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
                 column(h5(""),width=1,plotOutput("scale",height = '800px'),style = "background-color:white;"),
-                column(h5(""),width=5,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
+                column(h5("Relative Bycatch Index"),width=5,d3heatmapOutput("heatmap",height = '800px'),style = "background-color:white;",
                        absolutePanel(draggable=T,top = 0, left = 0, right = 0,tags$div(h2(style="background-color:white;text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("EXPLORATORY ONLY. Output does not necessarily align with results in Savoca et al.")))))),
-                # column(h5(""),width=1,plotOutput("scale_SD",height = '800px'),style = "background-color:white;"),
-                # column(h5("Inter-criteria variance"),width=5,d3heatmapOutput("heatmap_SD",height = '800px'),style = "background-color:white;"),
-                column(h6(style="font-style: italic;","App developed by Heather Welch (UCSC/NOAA)"),width = 12)
+                column(h5(""),width=1,plotOutput("scale_SD",height = '800px'),style = "background-color:white;"),
+                column(h5("Inter-criteria standard deviation"),width=5,d3heatmapOutput("heatmap_SD",height = '800px'),style = "background-color:white;")
                 # absolutePanel(div(style="text-align:center;color:red;padding:0px;border-radius: 0px; ",tags$b(tags$em("placeholder"))),draggable=T,top=350, right=50)
                 # absolutePanel(draggable=T,top = 0, left = 0, right = 0,div(style="padding: 8px; border-bottom: 1px solid #CCC; background: #FFFFEE;",HTML(markdownToHTML(fragment.only=TRUE,text="placeholder"))))
                 
@@ -139,20 +136,17 @@ ui <- dashboardPage(skin = "black",
             column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
              column(h5("Fish and invertebrates"),width=4,plotOutput("Fish")),
              column(h5("Mammals"),width=4,plotOutput("Mammals")),
-             column(h5("Seabirds and sea turtles"),width=4,plotOutput("SBST")),
-            column(h6(style="font-style: italic;","App developed by Heather Welch (UCSC/NOAA)"),width = 12)
+             column(h5("Seabirds and sea turtles"),width=4,plotOutput("SBST"))
         )),
        tabItem(tabName = "fishing",
                fluidRow(
                  column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
-                 column(h5(""),width=12,plotOutput("gear_ll",height = '800px'))),
-               column(h6(style="font-style: italic;","App developed by Heather Welch (UCSC/NOAA)"),width = 12)
+                 column(h5(""),width=12,plotOutput("gear_ll",height = '800px')))
                ),
        tabItem(tabName = "raw",
                fluidRow(
                  column(h4(style="text-align:center;","This app explores relative bycatch performance in US fisheries with bycatch estimates published in the National Bycatch Report."),width = 12),
-                 column(h5(""),width=12,DT::dataTableOutput("rawTable")),
-                 column(h6(style="font-style: italic;","App developed by Heather Welch (UCSC/NOAA)"),width = 12)
+                 column(h5(""),width=12,DT::dataTableOutput("rawTable"))
                ))
      ))
 
@@ -164,7 +158,6 @@ ui <- dashboardPage(skin = "black",
 server <- shinyServer(function(input, output,session) {
   
   output$heatmap<-renderD3heatmap({
-    if(input$display=="Relative Bycatch Index"){
     a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
     # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))#Here 'w' refers to the weights.
    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
@@ -178,82 +171,53 @@ server <- shinyServer(function(input, output,session) {
               show_grid=F, yaxis_width=400,show_color_legend=T,na_color="white",row_side_palette=c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F")
               
     )
-    }
-    
-    else if(input$display=="Inter-criteria variance"){
-      a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
-      
-      q=rbi %>% select(Year,criteria_sd,Fishery)%>% mutate(criteria_sd=criteria_sd^2) %>% spread(Year,criteria_sd) %>% mutate(Fishery=as.character(Fishery)) %>% arrange(desc(Fishery))
-      rownames(q)=q$Fishery
-      q=q %>% .[,2:ncol(.)] 
-      
-      d3heatmap(q, na.rm=T,Rowv = FALSE, Colv=FALSE, colors=c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF"),
-                xlab=w,
-                show_grid=F, yaxis_width=400,show_color_legend=T,na_color="white",row_side_palette=c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF")
-                
-      )
-    }
-    
   })
   
-  output$scale<-renderPlot({
-    if(input$display=="Relative Bycatch Index"){
+  output$scale_SD<-renderPlot({
     # par(mar=c(1,.1,.1,.1))
-    a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
-    col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
+    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))
+    col.pal <- colorRampPalette(c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF"))
     ncolors <- 100
-    #breaks <- seq(min(a$mean_criteria,na.rm = T),max(a$mean_criteria,na.rm = T),,ncolors+1)
-    breaks <- seq(0,.51,,ncolors+1)
+    breaks <- seq(min(rbi$criteria_sd,na.rm = T),max(.92,na.rm = T),,ncolors+1)
     levs <- breaks[-1] - diff(breaks)/2
     # image(x=levs, y=1, z=as.matrix(levs), col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n")
     par(mar=c(.1,.1,.1,.1))
     image.plot(x=levs, y=1,smallplot= c(0,.2,.2,1), z=as.matrix(levs), legend.only = TRUE,col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n",axis.args = list(cex.axis = .6))
-    }
     
-    else if(input$display=="Inter-criteria variance"){
-      col.pal <- colorRampPalette(c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF"))
-      ncolors <- 100
-      breaks <- seq(min((rbi$criteria_sd)^2,na.rm = T),max(.31,na.rm = T),,ncolors+1)
-      levs <- breaks[-1] - diff(breaks)/2
-      # image(x=levs, y=1, z=as.matrix(levs), col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n")
-      par(mar=c(.1,.1,.1,.1))
-      image.plot(x=levs, y=1,smallplot= c(0,.2,.2,1), z=as.matrix(levs), legend.only = TRUE,col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n",axis.args = list(cex.axis = .6))
-      
-    }
   })
   
-  # output$heatmap_SD<-renderD3heatmap({
-  #   a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
-  #   # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))#Here 'w' refers to the weights.
-  #   # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
-  #   
-  #   q=a %>% select(Year,mean_criteria,Fishery) %>% spread(Year,mean_criteria) %>% mutate(Fishery=as.character(Fishery)) %>% arrange(desc(Fishery))
-  #   rownames(q)=q$Fishery
-  #   q=q %>% .[,2:ncol(.)] 
-  #   
-  #   d3heatmap(q, na.rm=T,Rowv = FALSE, Colv=FALSE, colors=c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"),
-  #             xlab=w,
-  #             show_grid=F, yaxis_width=400,show_color_legend=T,na_color="white",row_side_palette=c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F")
-  #             
-  #   )
-  # })
+  output$heatmap_SD<-renderD3heatmap({
+    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
+    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))#Here 'w' refers to the weights.
+    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
+    
+    q=rbi %>% select(Year,criteria_sd,Fishery) %>% spread(Year,criteria_sd) %>% mutate(Fishery=as.character(Fishery)) %>% arrange(desc(Fishery))
+    rownames(q)=q$Fishery
+    q=q %>% .[,2:ncol(.)] 
+    
+    d3heatmap(q, na.rm=T,Rowv = FALSE, Colv=FALSE, colors=c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF"),
+              xlab=w,
+              show_grid=F, yaxis_width=400,show_color_legend=T,na_color="white",row_side_palette=c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF")
+              
+    )
+  })
   
-  # output$scale_SD<-renderPlot({
-  #   # par(mar=c(1,.1,.1,.1))
-  #   # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))
-  #   col.pal <- colorRampPalette(c("#440154FF", "#31688EFF" ,"#35B779FF", "#FDE725FF"))
-  #   ncolors <- 100
-  #   breaks <- seq(min((rbi$criteria_sd)^2,na.rm = T),max(.31,na.rm = T),,ncolors+1)
-  #   levs <- breaks[-1] - diff(breaks)/2
-  #   # image(x=levs, y=1, z=as.matrix(levs), col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n")
-  #   par(mar=c(.1,.1,.1,.1))
-  #   image.plot(x=levs, y=1,smallplot= c(0,.2,.2,1), z=as.matrix(levs), legend.only = TRUE,col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n",axis.args = list(cex.axis = .6))
-  #   
-  # })
+  output$scale<-renderPlot({
+    # par(mar=c(1,.1,.1,.1))
+    a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))
+    col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
+    ncolors <- 100
+    breaks <- seq(min(a$mean_criteria,na.rm = T),max(a$mean_criteria,na.rm = T),,ncolors+1)
+    levs <- breaks[-1] - diff(breaks)/2
+    # image(x=levs, y=1, z=as.matrix(levs), col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n")
+    par(mar=c(.1,.1,.1,.1))
+    image.plot(x=levs, y=1,smallplot= c(0,.2,.2,1), z=as.matrix(levs), legend.only = TRUE,col=col.pal(ncolors), breaks=breaks, ylab="", xlab="", yaxt="n",axis.args = list(cex.axis = .6))
+    
+  })
   
-  # output$placeholder=renderText({
-  #   "test"
-  # })
+  output$placeholder=renderText({
+    "test"
+  })
 
    output$Fish<-renderPlot({
     value=input$choice_sp
@@ -265,7 +229,7 @@ server <- shinyServer(function(input, output,session) {
         theme(panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               strip.background = element_blank(),
-              panel.border = element_rect(colour = "black"))+ylab("Total bycatch (lbs)")+xlab("Year")+ scale_y_log10(labels = scales::comma)
+              panel.border = element_rect(colour = "black"))+ylab("Total bycatch (lbs)")+xlab("Year")+ scale_y_continuous(labels = comma)
       b
       }
     if(value=="Region"){
@@ -408,7 +372,7 @@ server <- shinyServer(function(input, output,session) {
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
-                 panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")+scale_y_log10(labels = scales::comma)
+                 panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")
        }
        if(value=="Region"){
          options(scipen=10000)
@@ -416,7 +380,7 @@ server <- shinyServer(function(input, output,session) {
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
-                 panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")+scale_y_log10(labels = scales::comma)+
+                 panel.border = element_rect(colour = "black"))+ylab("Total landings")+xlab("Year")+
            scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
        }
      }
@@ -434,7 +398,7 @@ server <- shinyServer(function(input, output,session) {
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
-                 panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")+scale_y_log10(labels = scales::comma)
+                 panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")
        }
        if(value=="Region"){
          options(scipen=10000)
@@ -442,7 +406,7 @@ server <- shinyServer(function(input, output,session) {
            theme(panel.grid.major = element_blank(),
                  panel.grid.minor = element_blank(),
                  strip.background = element_blank(),
-                 panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")+scale_y_log10(labels = scales::comma)+
+                 panel.border = element_rect(colour = "black"))+ylab("Total catch")+xlab("Year")+
            scale_fill_manual("",values=c("AK"="#7489ff","PI"="#c2c700","SE"="#00683b","WC"="#b45300","NE"="#afcf9d"),labels=c("AK"="Alaska","PI"="Pacific Islands","SE"="Southeast","WC"="Westcoast","NE"="Northeast"))
        }
   
@@ -474,7 +438,7 @@ server <- shinyServer(function(input, output,session) {
        }
        
      }
-     if(input$Free_y==T){
+     if(input$Free_y==F){
        b=b+facet_wrap(~FISHERY.TYPE,scales = "fixed")
      }
      b
