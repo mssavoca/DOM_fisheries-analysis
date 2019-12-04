@@ -28,7 +28,7 @@ d_raw_SBST <- read_excel("MM_SB_ST_master_data_frame2010_2015.xlsx") %>%
   filter(REGION == "NE" & GROUP %in% c("sea turtle", "seabird")) %>% 
   group_by(FISHERY, YEAR) %>% 
 
-# summary tables and statistics
+# summary tables and statistics----
 d_summ_full <- d_raw_fish %>% 
   filter(UNIT == "POUND") %>% 
   group_by(FISHERY, YEAR) %>% 
@@ -65,7 +65,7 @@ d_summ_summ <- d1 %>%
   summarize(num.fisheries = n_distinct(Fishery),
             total.SBST.bycatch = sum(TotalBycatch_inds, na.rm = TRUE),
             total.fish.bycatch = sum(TotalBycatch_lbs, na.rm = TRUE),
-            bycatch.ratio = Bycatch_ratio,
+            bycatch.ratio = median,
             total.fish.catch = TotalBycatch_lbs/Bycatch_ratio,
             total.target.catch = total.fish.catch-total.fish.bycatch)
 
@@ -73,8 +73,22 @@ sum(d_summ_summ$total.target.catch, na.rm = TRUE) # to get total target catch
 sum(d_summ_summ$total.fish.bycatch, na.rm = TRUE) # to get total bycatch
 sum(d_summ_summ$total.fish.catch, na.rm = TRUE) # to get total bycatch
 
-a=d1 %>% group_by(Fishery, Region) %>% summarise(meanSBST = mean(TotalBycatch_inds)) %>% 
-  arrange(-meanSBST)
+a = d1 %>% 
+  group_by(GearType_general) %>% 
+  summarise(med_BR = median(Bycatch_ratio, na.rm = TRUE),
+            total.fish.bycatch = sum(TotalBycatch_lbs, na.rm = TRUE)) %>% 
+  arrange(-med_BR)
+
+b = d1 %>% 
+  group_by(Year) %>% 
+  summarise(mean_BR = mean(Bycatch_ratio, na.rm = TRUE),
+            total.fish.bycatch = sum(TotalBycatch_lbs, na.rm = TRUE)) %>% 
+  arrange(-mean_BR)
+
+overfish <- d1 %>% 
+  filter(Overfishing_Fm_numeric + Overfishing_Bt_numeric > 0) %>% 
+  select(Fishery_ShortName, Year, Overfishing_Fm_numeric, Overfishing_Bt_numeric)
+
 
 #Summary of the RBI
 d_crit_summ <- d1 %>% 
@@ -91,6 +105,7 @@ b <- d1 %>%
   filter(Year %in% c("2010","2011", "2012", "2013", "2014")) %>% 
   group_by(Year) %>% 
   summarise(tot_by = mean(TotalBycatch_lbs))
+
 
 
 ## CHANGE 0s to NAs for SBST metrics in:
@@ -194,7 +209,7 @@ BR_gear <- ggplot(filter(d1, BR_ratio_cat != "NA"),
                          aes(BR_ratio_cat)) +
   geom_bar(aes(fill = GearType_general)) +
   ylab("Number of fisheries") +
-  xlab("Bycatch ratio of fish and invertebrates") +
+  xlab("Discard rate of fish and invertebrates") +
   guides(fill=guide_legend(title="gear type")) +
   scale_fill_manual(values=HW_palette) +
   theme_classic(base_size = 20) +
