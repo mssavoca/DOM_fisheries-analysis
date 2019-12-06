@@ -15,7 +15,7 @@ SE = function(x){sd(x)/sqrt(sum(!is.na(x)))}
 lbs.to.tonnes = function(x){x/2204.62}
 
 # fisheries summary data
-d1 <- read_csv("SummaryData_November2019_AnalysisExport_AllFisheryYears.csv")
+d1 <- read_csv("SummaryData_December2019_AllFisheryYears_AnalysisExport.csv")
 d1$Year <- as.factor(d1$Year)
 d1$Region <- as.factor(d1$Region)
 
@@ -28,7 +28,7 @@ d_raw_SBST <- read_excel("MM_SB_ST_master_data_frame2010_2015.xlsx") %>%
   filter(REGION == "NE" & GROUP %in% c("sea turtle", "seabird")) %>% 
   group_by(FISHERY, YEAR) %>% 
 
-# summary tables and statistics
+# summary tables and statistics----
 d_summ_full <- d_raw_fish %>% 
   filter(UNIT == "POUND") %>% 
   group_by(FISHERY, YEAR) %>% 
@@ -65,7 +65,7 @@ d_summ_summ <- d1 %>%
   summarize(num.fisheries = n_distinct(Fishery),
             total.SBST.bycatch = sum(TotalBycatch_inds, na.rm = TRUE),
             total.fish.bycatch = sum(TotalBycatch_lbs, na.rm = TRUE),
-            bycatch.ratio = Bycatch_ratio,
+            bycatch.ratio = median,
             total.fish.catch = TotalBycatch_lbs/Bycatch_ratio,
             total.target.catch = total.fish.catch-total.fish.bycatch)
 
@@ -73,17 +73,66 @@ sum(d_summ_summ$total.target.catch, na.rm = TRUE) # to get total target catch
 sum(d_summ_summ$total.fish.bycatch, na.rm = TRUE) # to get total bycatch
 sum(d_summ_summ$total.fish.catch, na.rm = TRUE) # to get total bycatch
 
-a=d1 %>% group_by(Fishery, Region) %>% summarise(meanSBST = mean(TotalBycatch_inds)) %>% 
-  arrange(-meanSBST)
+a = d1 %>% 
+  group_by(GearType_general) %>% 
+  summarise(med_BR = median(Bycatch_ratio, na.rm = TRUE),
+            total.fish.bycatch = sum(TotalBycatch_lbs, na.rm = TRUE)) %>% 
+  arrange(-med_BR)
+
+b = d1 %>% 
+  group_by(Year) %>% 
+  summarise(mean_BR = mean(Bycatch_ratio, na.rm = TRUE),
+            total.fish.bycatch = sum(TotalBycatch_lbs, na.rm = TRUE)) %>% 
+  arrange(-mean_BR)
+
+overfish <- d1 %>% 
+  filter(Overfishing_Fm_numeric + Overfishing_Bt_numeric > 0) %>% 
+  select(Fishery_ShortName, Year, Overfishing_Fm_numeric, Overfishing_Bt_numeric)
+
+
+d_raw_ind_discards <- read_csv("National_Bycatch_Database.csv") %>% 
+  filter(GROUP %in% c("fish", "invertebrate"),
+         UNIT == "INDIVIDUAL") %>% 
+  group_by(FISHERY, YEAR) %>% 
+  summarize(Ind_total_discards = mean(TOTAL.FISHERY.BYCATCH.FISH.INVERT, na.rm = TRUE))
+
+write_csv(d_raw_ind_discards, "d_raw_ind_discards.csv")
+
+
+d_raw_ind_IUCN_discards <- read_csv("National_Bycatch_Database.csv") %>% 
+  filter(GROUP %in% c("fish", "invertebrate"),
+         UNIT == "INDIVIDUAL",
+         IUCN.STATUS %in% c("NT", "VU", "EN", "CR")) %>% 
+  group_by(FISHERY, YEAR) %>% 
+  summarize(IUCN_total_discards = sum(BYCATCH))
+
+d_raw_ind_ESA_discards <- read_csv("National_Bycatch_Database.csv") %>% 
+  filter(GROUP %in% c("fish", "invertebrate"),
+         UNIT == "INDIVIDUAL",
+         ESA.STATUS %in% c("T", "E")) %>% 
+  group_by(FISHERY, YEAR) %>% 
+  summarize(ESA_total_discards = sum(BYCATCH))
+
+nightmare <- left_join(d_raw_ind_discards, d_raw_ind_IUCN_discards)
+
+nightmare2 <- left_join(nightmare, d_raw_ind_ESA_discards)
+
+write_csv(nightmare2, "d_raw_ind_discards.csv")
+
+
+d1_test <- read_csv("SummaryData_December2019_AllFisheryYears_checked.csv") %>% 
+  summarise(n_tot = n_distinct(Fishery))
+
+
 
 #Summary of the RBI
 d_crit_summ <- d1 %>% 
-  #filter(Region == "NE" & Year %in% c("2014", "2015")) %>% 
+  #filter(Region == "NE" & Year %in% c("2010", "2011", "2012","2013")) %>% 
   #filter(GearType_specific %in% c("large-mesh otter trawl", "small-mesh otter trawl")) %>% 
   #filter(GearType_specific %in% c("surface longline", "deep-set longline")) %>% 
-  #group_by(GearType_specific) %>% 
-  group_by(Region) %>% 
-  group_by(Fishery) %>% 
+  #group_by(GearType_general) %>% 
+  #group_by(Region) %>% 
+   group_by(Fishery) %>% 
   summarise(median.score = median(mean_criteria),
             SE.score = SE(mean_criteria))
 
@@ -91,6 +140,7 @@ b <- d1 %>%
   filter(Year %in% c("2010","2011", "2012", "2013", "2014")) %>% 
   group_by(Year) %>% 
   summarise(tot_by = mean(TotalBycatch_lbs))
+
 
 
 ## CHANGE 0s to NAs for SBST metrics in:
@@ -174,14 +224,14 @@ rastalbatross <- grid::rasterGrob(imgalbatross, interpolate = T)
 
 
 # identifying quantiles for break points
-quantile(d1$Bycatch_ratio, probs = c(0.5, 0.75), na.rm = TRUE)
+quantile(d1$Discard_Rate, probs = c(0.5, 0.75), na.rm = TRUE)
 quantile(d1$TotalBycatch_inds, probs = c(0.5, 0.75), na.rm = TRUE)
 
 #adding columms changing continuous values to discrete for figure
 d1 <- d1 %>% mutate(
-  BR_ratio_cat = cut(Bycatch_ratio, breaks=c(-Inf, 0.1480491, 0.3037714, Inf), 
+  BR_ratio_cat = cut(Discard_Rate, breaks=c(-Inf, 0.1531961, 0.3037714, Inf), 
                      labels=c("low (<0.15)","moderate (0.15-0.30)","high (>0.30)")),
-  TotalBycatch_SBST_cat = cut(TotalBycatch_inds, breaks=c(-Inf, 0, 50.5, Inf),  # 26.875
+  TotalBycatch_SBST_cat = cut(TotalBycatch_SS_inds, breaks=c(-Inf, 0, 50.5, Inf),  # 26.875
                               labels=c("none","moderate (1-50)","high (>50)")),
   MMPA_cat = case_when(MMPA == 1 ~ "III",
                        MMPA == 2 ~ "II",
@@ -194,13 +244,13 @@ BR_gear <- ggplot(filter(d1, BR_ratio_cat != "NA"),
                          aes(BR_ratio_cat)) +
   geom_bar(aes(fill = GearType_general)) +
   ylab("Number of fisheries") +
-  xlab("Bycatch ratio of fish and invertebrates") +
+  xlab("Discard rate of fish and invertebrates") +
   guides(fill=guide_legend(title="gear type")) +
   scale_fill_manual(values=HW_palette) +
   theme_classic(base_size = 20) +
-  annotation_custom(rastshark, ymin = 165, ymax = 190, xmin = 0.25, xmax = 5) +
-  annotation_custom(rastcrab, ymin = 140, ymax = 160, xmin = 1) +
-  annotation_custom(rastjelly, ymin = 140, ymax = 160, xmin = 2) 
+  annotation_custom(rastshark, ymin = 140, ymax = 165, xmin = 0.25, xmax = 5) +
+  annotation_custom(rastcrab, ymin = 115, ymax = 135, xmin = 1) +
+  annotation_custom(rastjelly, ymin = 115, ymax = 135, xmin = 2) 
 BR_gear
 
 
@@ -260,7 +310,7 @@ mean_score_hist <- ggplot(d1, aes(mean_criteria)) +
   #          label = c("better performing", "worse performing")) +
   #geom_density(alpha=.2, fill="#FF6666") +
   #facet_wrap(.~GearType_general) +
-  geom_vline(xintercept = c(0.1235691, 0.2026025), color = "blue", linetype = "dashed") +
+  geom_vline(xintercept = c(0.1364394, 0.2173723), color = "blue", linetype = "dashed") +
   theme_classic(base_size = 16)
 mean_score_hist 
 
