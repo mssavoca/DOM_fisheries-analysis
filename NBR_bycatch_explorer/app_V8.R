@@ -47,7 +47,7 @@ master_extra_raw=master_extra_raw %>% mutate(FISHERY=gsub("West Coast Mid-Water 
 # write.csv(final,"data/mammals_by_year.csv",row.names = F)
 #####
 mammals=read.csv("data/mammals_by_year.csv")
-rbi=read.csv("data/SummaryData_December2019_AllFisheryYears_AnalysisExport.csv")
+rbi=read.csv("data/SummaryData_November2019_AnalysisExport_AllFisheryYears.csv")
 
 group=unique(master$GROUP)%>% .[complete.cases(.)]
 year=c(2010,2011,2012,2013,2014,2015)
@@ -91,7 +91,7 @@ ui <- dashboardPage(skin = "black",
                                                          placement = "right", 
                                                          trigger = "hover", 
                                                          options = list(container = "body")),
-                                               radioButtons("display","Select display metric",choices = list("Relative Bycatch Index","Inter-criteria variance"),width = "100%",selected = "Relative Bycatch Index"),
+                                               radioButtons("display","Select display metric",choices = list("Relative Bycatch Index","Inter-criteria variance"),width = "100%",selected = "Inter-criteria variance"),
                                                conditionalPanel("input.display ==='Relative Bycatch Index'",
                                                sliderInput("mmpa","Adjust MMPA weighting",min=1,max=5,step=1,value=2),
                                                # shinyBS::bsTooltip("mmpa", "The wait times will be broken into this many equally spaced bins",
@@ -165,7 +165,7 @@ server <- shinyServer(function(input, output,session) {
   
   output$heatmap<-renderD3heatmap({
     if(input$display=="Relative Bycatch Index"){
-    a=rbi %>% mutate(mean_criteria = apply(.[,37:48],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
+    a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
     # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),input$mmpa,rep(1,2)),na.rm=T)))#Here 'w' refers to the weights.
    # a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
     
@@ -181,7 +181,7 @@ server <- shinyServer(function(input, output,session) {
     }
     
     else if(input$display=="Inter-criteria variance"){
-      a=rbi %>% mutate(mean_criteria = apply(.[,37:48],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
+      a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(rep(1,9),2,rep(1,2)),na.rm=T)))# delete this before launching
       
       q=rbi %>% select(Year,criteria_sd,Fishery)%>% mutate(criteria_sd=criteria_sd^2) %>% spread(Year,criteria_sd) %>% mutate(Fishery=as.character(Fishery)) %>% arrange(desc(Fishery))
       rownames(q)=q$Fishery
@@ -199,7 +199,7 @@ server <- shinyServer(function(input, output,session) {
   output$scale<-renderPlot({
     if(input$display=="Relative Bycatch Index"){
     # par(mar=c(1,.1,.1,.1))
-    a=rbi %>% mutate(mean_criteria = apply(.[,37:48],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
+    a=rbi %>% mutate(mean_criteria = apply(.[,29:40],1,function(x) weighted.mean(x,w=c(input$TB_lbs,input$TB_indv,input$BR,input$ESA_n,input$ESA_lbs,input$ESA_bt,input$IUCN_n,input$IUCN_lbs,input$IUCN_bt,input$mmpa,input$Tier,input$CV),na.rm=T)))#Here 'w' refers to the weights.
     col.pal <- colorRampPalette(c("#053061" ,"#2166AC", "#4393C3",  "#D1E5F0" , "#FDDBC7", "#F4A582" ,"#D6604D" ,"#B2182B","#B2182B","#67001F"))
     ncolors <- 100
     #breaks <- seq(min(a$mean_criteria,na.rm = T),max(a$mean_criteria,na.rm = T),,ncolors+1)
