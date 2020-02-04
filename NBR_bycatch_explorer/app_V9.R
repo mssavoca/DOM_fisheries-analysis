@@ -23,9 +23,6 @@ master_extra_raw=read.csv("data/All_bycatch_data_2010_2015.csv")%>% mutate(YEAR=
 master_extra_raw[master_extra_raw=="combined gears"]<-"longline gears"
 master_extra_raw=master_extra_raw %>% mutate(FISHERY=gsub("West Coast Mid-Water Trawl for Whiting","West Coast Mid-Water Trawl for Hake",FISHERY)) %>% mutate(FISHERY=gsub("Oregon/California Pink Shrimp","Washington/Oregon/California Pink Shrimp",FISHERY))
 
-metadata=read.csv("data/metadata.csv")
-
-
 ### code to split mammals by year ####
 # a=master %>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL")
 # new=list()
@@ -116,8 +113,8 @@ ui <- dashboardPage(skin = "black",
                                                selectInput("raw_species","Filter species",species,width = "100%"),
                                                selectInput("raw_fishery","Filter fishery",fishery,width = "100%"),
                                                selectInput("raw_gear","Filter gear",gear,width = "100%"),
-                                               div(style="text-align:center",downloadButton("downloadDataF", label = h6(style="color:black","Download dataset")))
-                                               # div(style="text-align:center",downloadButton("downloadDataM", label = h6(style="color:black","Download metadata")))
+                                               div(style="text-align:center",downloadButton("downloadDataF", label = h6(style="color:black","Download dataset"))),
+                                               div(style="text-align:center",downloadButton("downloadDataM", label = h6(style="color:black","Download metadata")))
                               )#,
                               # div(style="text-align:center",url <- a(tags$span(style="color:dodgerblue",h4("Read the paper")), href="https://media.giphy.com/media/qaoutfIYJYxr2/source.gif"))
                                )),
@@ -532,31 +529,20 @@ server <- shinyServer(function(input, output,session) {
      return(a)
    })
    
-   
-   
     output$downloadDataF <- downloadHandler(
       filename = function() {
-        paste("National_Bycatch_Database", ".xlsx", sep = "")
+        paste("National_Bycatch_Database", ".csv", sep = "")
       },
       content = function(file) {
         
-        wb=createWorkbook()
-        addWorksheet(wb=wb,sheetName = "NBR_data")
-        writeData(wb,sheet=1,filtered_data())
-        
-        addWorksheet(wb=wb,sheetName = "metadata")
-        writeData(wb,sheet=2,metadata)
-        
-        saveWorkbook(wb, file, overwrite = TRUE)
-        
-        # write.csv(filtered_data(), file, row.names = FALSE)
+        write.csv(filtered_data(), file, row.names = FALSE)
       })
     
-    # output$downloadDataM <- downloadHandler(
-    #   filename = "US_Bycatch_analysis_Raw_data_metadata.pdf",
-    #   content = function(file) {
-    #     file.copy("data/US_Bycatch_analysis_Raw_data_metadata.pdf", file)
-    #   })
+    output$downloadDataM <- downloadHandler(
+      filename = "US_Bycatch_analysis_Raw_data_metadata.pdf",
+      content = function(file) {
+        file.copy("data/US_Bycatch_analysis_Raw_data_metadata.pdf", file)
+      })
 
   
 })
