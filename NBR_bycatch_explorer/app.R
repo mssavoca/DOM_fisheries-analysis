@@ -23,8 +23,15 @@ master_extra_raw=read.csv("data/All_bycatch_data_2010_2015.csv")%>% mutate(YEAR=
 master_extra_raw[master_extra_raw=="combined gears"]<-"longline gears"
 master_extra_raw=master_extra_raw %>% mutate(FISHERY=gsub("West Coast Mid-Water Trawl for Whiting","West Coast Mid-Water Trawl for Hake",FISHERY)) %>% mutate(FISHERY=gsub("Oregon/California Pink Shrimp","Washington/Oregon/California Pink Shrimp",FISHERY))
 
-metadata=read.csv("data/metadata.csv")
-
+# metadata=read_xls("data/metadata.xlsx")
+metadata=read_xlsx("data/metadata.xlsx")
+# # Add title
+# xlsx.addTitle(metadata, rowIndex=1, title="NBR metadata",
+#               titleStyle = TITLE_STYLE)
+# # Add sub title
+# xlsx.addTitle(metadata, rowIndex=2, 
+#               title=Disclaimer: "These data come directly from the National Bycatch Reports of 2010-2015. Scientists use a variety of analytical methods to develop bycatch analyses based on available data, the design of particular regional observer programs, and the type of bycatch being analyzed (i.e., rare-event turtle bycatch versus more common fish bycatch). Because data summary and analysis methods that are used in the NBR to produce comparable bycatch estimates across fisheries and regions do not reflect individual aspects of specific fisheries, the estimates may not represent the best available bycatch data for management purposes. Therefore, NBR data should not be used for day-to-day management of individual stocks, but rather considered as a source of information on bycatch at a national level.",
+#               titleStyle = SUB_TITLE_STYLE)
 
 ### code to split mammals by year ####
 # a=master %>% filter(GROUP=="marine mammal") %>% filter(UNIT=="INDIVIDUAL")
@@ -107,7 +114,7 @@ ui <- dashboardPage(skin = "black",
                                                sliderInput("ESA_bt","Adjust ESA (birds and turtles) weighting",min=1,max=5,step=1,value=1),
                                                sliderInput("IUCN_n","Adjust IUCN (#) weighting",min=1,max=5,step=1,value=1),
                                                sliderInput("IUCN_lbs","Adjust IUCN (lbs) weighting",min=1,max=5,step=1,value=1),
-                                               sliderInput("IUCN_bt","Adjust IUCN (bids and turtles) weighting",min=1,max=5,step=1,value=1),
+                                               sliderInput("IUCN_bt","Adjust IUCN (birds and turtles) weighting",min=1,max=5,step=1,value=1),
                                                sliderInput("Tier","Adjust Tier weighting",min=1,max=5,step=1,value=1),
                                                sliderInput("CV","Adjust CV weighting",min=1,max=5,step=1,value=1)
                                                )),
@@ -541,11 +548,16 @@ server <- shinyServer(function(input, output,session) {
       content = function(file) {
         
         wb=createWorkbook()
-        addWorksheet(wb=wb,sheetName = "NBR_data")
-        writeData(wb,sheet=1,filtered_data())
-        
         addWorksheet(wb=wb,sheetName = "metadata")
-        writeData(wb,sheet=2,metadata)
+        mergeCells(wb, "metadata", cols = 1:5, rows = 1)
+        headerStyle1 <- createStyle(fontSize = 12, fontColour = "black",
+                                    textDecoration = "bold", wrapText = TRUE)
+        addStyle(wb, sheet = "metadata", headerStyle1, rows = 1, cols = 1,
+                 gridExpand = TRUE)
+        writeData(wb,sheet=1,metadata)
+        
+        addWorksheet(wb=wb,sheetName = "NBR_data")
+        writeData(wb,sheet=2,filtered_data())
         
         saveWorkbook(wb, file, overwrite = TRUE)
         

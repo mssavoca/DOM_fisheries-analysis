@@ -73,6 +73,7 @@ library(DT)
 library(htmlwidgets)
 library(lubridate)
 library(openxlsx)
+library(readxl)
 
 # pkgTest("miniUI")
 # pkgTest("shinyjs")
